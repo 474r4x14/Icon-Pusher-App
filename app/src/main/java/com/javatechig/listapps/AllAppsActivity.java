@@ -1,6 +1,8 @@
 package com.javatechig.listapps;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -90,46 +92,18 @@ public class AllAppsActivity extends ListActivity {
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 
-		//PackageManager
-		//ComponentName.
-
-
-
 		ApplicationInfo app = applist.get(position);
 
 
 		final PackageManager pm = getApplicationContext().getPackageManager();
-		/*
-		ApplicationInfo ai;
-		try {
-			ai = pm.getApplicationInfo( app.packageName, 0);
-		} catch (final PackageManager.NameNotFoundException e) {
-			ai = null;
-		}
-		*/
-		//final ComponentInfo ci = new ComponentInfo();
-
-		//PackageManager pm = getPackageManager();
 		Intent intent=pm.getLaunchIntentForPackage(app.packageName);
-		//String tmp0 = intent.getAction();
-		//startActivity(intent);
 
 		ComponentName tmp = intent.getComponent();
 		String tmp10 = tmp.getClassName();
 
-
-		//AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		//builder.setMessage(R.string.hello_world)
 		String tmp1 = app.packageName + "!!!";
-		//String tmp2 = app.processName + "!!!";
-		//String tmp3 = app.manageSpaceActivityName + "!!!";
-		//String tmp4 = app.name + "!!!";
-		//String tmp5 = app.className + "!!!";
 
-
-
-		//builder.setMessage(tmp1 + "\n" +tmp2 + "\n" +tmp3 + "\n" + tmp4 + "\n" + tmp5 + "\n" + tmp0 + "\n" + tmp10 + "\n")
 		builder.setMessage(tmp1 + "\n\n" + tmp10 + "\n")
 				.setPositiveButton(R.string.fire, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
@@ -177,6 +151,32 @@ public class AllAppsActivity extends ListActivity {
 				e.printStackTrace();
 			}
 		}
+
+
+		Collections.sort(applist, new Comparator<ApplicationInfo>()
+		{
+			@Override
+			public int compare(ApplicationInfo lhs, ApplicationInfo rhs) {
+
+				ApplicationInfo ai1;
+				ApplicationInfo ai2;
+				try {
+					ai1 = packageManager.getApplicationInfo(lhs.packageName, 0);
+				} catch (final PackageManager.NameNotFoundException e) {
+					ai1 = null;
+				}
+				try {
+					ai2 = packageManager.getApplicationInfo(rhs.packageName, 0);
+				} catch (final PackageManager.NameNotFoundException e) {
+					ai2 = null;
+				}
+				final String lhsName = (String) (ai1 != null ? packageManager.getApplicationLabel(ai1) : "(unknown)");
+				final String rhsName = (String) (ai2 != null ? packageManager.getApplicationLabel(ai2) : "(unknown)");
+
+				return lhsName.compareToIgnoreCase(rhsName);
+			}
+		});
+
 
 		return applist;
 	}
