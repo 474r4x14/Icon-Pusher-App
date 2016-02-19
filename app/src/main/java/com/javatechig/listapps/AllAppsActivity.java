@@ -10,7 +10,9 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import android.app.AlertDialog;
@@ -90,7 +92,24 @@ public class AllAppsActivity extends ListActivity {
 				//PushData pushData = new PushData();
 				//pushData.postData();
 				Log.w("myApp", "about to pushdata");
-				new PushData().execute("temp");
+
+				//Map<String, String> map = new HashMap<>();
+
+				for (int i=0; i<applist.size(); i++) {
+					ApplicationInfo info = applist.get(i);
+					//System.out.println(applist.get(i));
+					Map appData = getPackageData(info);
+					new PushData().execute(appData);
+				}
+
+
+
+				//map.put("name", "demo");
+				//map.put("fname", "fdemo");
+
+
+
+				//new PushData().execute(map);
 				Log.w("myApp", "finished pushdata");
 
 
@@ -107,7 +126,23 @@ public class AllAppsActivity extends ListActivity {
 	}
 
 
+	private Map getPackageData(ApplicationInfo appInfo) {
+		Map theMap = new HashMap<>();
+		final PackageManager pm = getApplicationContext().getPackageManager();
+		Intent intent=pm.getLaunchIntentForPackage(appInfo.packageName);
 
+		ComponentName tmp = intent.getComponent();
+
+		theMap.put("className", tmp.getClassName());
+
+		theMap.put("packageName", appInfo.packageName);
+
+		String android_id = Secure.getString(this.getContentResolver(),
+				Secure.ANDROID_ID);
+
+		theMap.put("android_id", android_id);
+		return theMap;
+	}
 
 
 
@@ -116,18 +151,26 @@ public class AllAppsActivity extends ListActivity {
 		super.onListItemClick(l, v, position, id);
 
 		ApplicationInfo app = applist.get(position);
+		// TODO move this into a method return a Map
+		// System.out.println(map.get("Color2")); // Blue
 
 
-		final PackageManager pm = getApplicationContext().getPackageManager();
-		Intent intent=pm.getLaunchIntentForPackage(app.packageName);
+		//final PackageManager pm = getApplicationContext().getPackageManager();
+		//Intent intent=pm.getLaunchIntentForPackage(app.packageName);
 
-		ComponentName tmp = intent.getComponent();
-		String tmp10 = tmp.getClassName();
+		//ComponentName tmp = intent.getComponent();
+		//String tmp10 = tmp.getClassName();
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		String tmp1 = app.packageName + "!!!";
+		//String tmp1 = app.packageName + "!!!";
 
-		builder.setMessage(tmp1 + "\n\n" + tmp10 + "\n")
+
+		Map appData = getPackageData(app);
+
+
+
+		//builder.setMessage(tmp1 + "\n\n" + tmp10 + "\n")
+		builder.setMessage(appData.get("packageName") + "\n\n" + appData.get("componentInfo") + "\n")
 				.setPositiveButton(R.string.fire, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
 						// FIRE ZE MISSILES!
@@ -142,12 +185,12 @@ public class AllAppsActivity extends ListActivity {
 		//return builder.create();
 		builder.create().show();
 
-
+		/*
 		String android_id = Secure.getString(this.getContentResolver(),
 				Secure.ANDROID_ID);
 
 		Log.w("android id?!",android_id);
-
+		*/
 		/*
 		ApplicationInfo app = applist.get(position);
 		try {
@@ -246,70 +289,151 @@ public class AllAppsActivity extends ListActivity {
 		}
 	}
 
-	private class PushData extends AsyncTask<String, Void, Void> {
+
+
+
+	private class PushData extends AsyncTask<Map<String,String>, Void, Void> {
 		@Override
-		protected Void doInBackground(String... urls) {
-
-			Log.w("myApp", "about to do http");
-
-
-
-
-//do this wherever you are wanting to POST
-			URL url;
-			HttpURLConnection conn;
-
-			try{
-//if you are using https, make sure to import java.net.HttpsURLConnection
-				url=new URL("https://defenestrate.me/icons.php");
-
-//you need to encode ONLY the values of the parameters
-				String param="param1=" + URLEncoder.encode("value1","UTF-8")+
-				"&param2="+URLEncoder.encode("value2","UTF-8")+
-				"&param3="+URLEncoder.encode("value3","UTF-8");
-
-				conn=(HttpURLConnection)url.openConnection();
-//set the output to true, indicating you are outputting(uploading) POST data
-				conn.setDoOutput(true);
-//once you set the output to true, you don’t really need to set the request method to post, but I’m doing it anyway
-				conn.setRequestMethod("POST");
-
-//Android documentation suggested that you set the length of the data you are sending to the server, BUT
-// do NOT specify this length in the header by using conn.setRequestProperty(“Content-Length”, length);
-//use this instead.
-				conn.setFixedLengthStreamingMode(param.getBytes().length);
-				conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-//send the POST out
-
-				PrintWriter out = new PrintWriter(conn.getOutputStream());
-				out.print(param);
-				out.close();
-
-//build the string to store the response text from the server
-				String response= "";
-
-//start listening to the stream
-
-				Scanner inStream = new Scanner(conn.getInputStream());
-
-//process the stream and store it in StringBuilder
-				while(inStream.hasNextLine())
-					response+=(inStream.nextLine());
-
-
-				Log.w("myApp","response was " + response);
+		//protected Void doInBackground(Map... mapVals) {
+		protected Void doInBackground(Map<String,String>... maps) {
+			/*
+			//int count = urls.length;
+			long totalSize = 0;
+			for (int i = 0; i < count; i++) {
+				totalSize += Downloader.downloadFile(urls[i]);
+				publishProgress((int) ((i / (float) count) * 100));
+				// Escape early if cancel() is called
+				if (isCancelled()) break;
 			}
-//catch some error
-			catch(MalformedURLException ex){
-				//Toast.makeText(MyActivity.this, ex.toString(), 1 ).show();
-				ex.getStackTrace();
+			return totalSize;
+			*/
+
+
+
+			int count = maps.length;
+			//long totalSize = 0;
+			for (int i = 0; i < count; i++) {
+				//totalSize += Downloader.downloadFile(mapVals[i]);
+				//publishProgress((int) ((i / (float) count) * 100));
+				// Escape early if cancel() is called
+				//if (isCancelled()) break;
+
+
+
+
+
+
+
+
+
+
+				Log.w("myApp", "about to do http");
+
+
+
+
+
+
+
+
+
+
+	//do this wherever you are wanting to POST
+				URL url;
+				HttpURLConnection conn;
+
+				try{
+	//if you are using https, make sure to import java.net.HttpsURLConnection
+					url=new URL("https://defenestrate.me/icons.php");
+
+	//you need to encode ONLY the values of the parameters
+					/*
+					String param="param1=" + URLEncoder.encode("value1","UTF-8")+
+					"&param2="+URLEncoder.encode("value2","UTF-8")+
+					"&param3="+URLEncoder.encode("value3","UTF-8");
+	*/
+					String param = "";
+					for (Map.Entry<String, String> entry : maps[i].entrySet())
+					{
+						//System.out.println(entry.getKey() + "/" + entry.getValue());
+
+						if (param != "") {
+							param += "&";
+						}
+
+						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
+					}
+
+
+
+
+
+
+
+					conn=(HttpURLConnection)url.openConnection();
+	//set the output to true, indicating you are outputting(uploading) POST data
+					conn.setDoOutput(true);
+	//once you set the output to true, you don’t really need to set the request method to post, but I’m doing it anyway
+					conn.setRequestMethod("POST");
+
+	//Android documentation suggested that you set the length of the data you are sending to the server, BUT
+	// do NOT specify this length in the header by using conn.setRequestProperty(“Content-Length”, length);
+	//use this instead.
+					conn.setFixedLengthStreamingMode(param.getBytes().length);
+					conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+	//send the POST out
+
+					PrintWriter out = new PrintWriter(conn.getOutputStream());
+					out.print(param);
+					out.close();
+
+	//build the string to store the response text from the server
+					String response= "";
+
+	//start listening to the stream
+
+					Scanner inStream = new Scanner(conn.getInputStream());
+
+	//process the stream and store it in StringBuilder
+					while(inStream.hasNextLine())
+						response+=(inStream.nextLine());
+
+
+					Log.w("myApp","response was " + response);
+				}
+	//catch some error
+				catch(MalformedURLException ex){
+					//Toast.makeText(MyActivity.this, ex.toString(), 1 ).show();
+					ex.getStackTrace();
+
+				}
+	// and some more
+				catch(IOException ex){
+	ex.getStackTrace();
+					//Toast.makeText(MyActivity.this, ex.toString(), 1 ).show();
+				}
+
+
+
 
 			}
-// and some more
-			catch(IOException ex){
-ex.getStackTrace();
-				//Toast.makeText(MyActivity.this, ex.toString(), 1 ).show();
-			}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
