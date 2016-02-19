@@ -40,6 +40,8 @@ public class AllAppsActivity extends ListActivity {
 	private PackageManager packageManager = null;
 	private List<ApplicationInfo> applist = null;
 	private ApplicationAdapter listadaptor = null;
+	private ProgressDialog progress;
+	private Integer progressDone = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -81,8 +83,8 @@ public class AllAppsActivity extends ListActivity {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.about_title));
 		builder.setMessage(getString(R.string.send_data));
-		
-		
+
+		progress=new ProgressDialog(this);
 		builder.setPositiveButton("Know More", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				//Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://javatechig.com"));
@@ -95,14 +97,27 @@ public class AllAppsActivity extends ListActivity {
 
 				//Map<String, String> map = new HashMap<>();
 
-				for (int i=0; i<applist.size(); i++) {
-					ApplicationInfo info = applist.get(i);
-					//System.out.println(applist.get(i));
-					Map appData = getPackageData(info);
-					new PushData().execute(appData);
-				}
 
+				progress.setMessage("Sending App Details");
+				progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				progress.setProgress(0);
+				progress.setMax(applist.size());
+				progress.show();
 
+				Thread mThread = new Thread() {
+					@Override
+					public void run() {
+						for (int i = 0; i < applist.size(); i++) {
+							ApplicationInfo info = applist.get(i);
+							//System.out.println(applist.get(i));
+							Map appData = getPackageData(info);
+							new PushData().execute(appData);
+							//progress.setProgress(i);
+						}
+						//progress.dismiss();
+					}
+				};
+				mThread.start();
 
 				//map.put("name", "demo");
 				//map.put("fname", "fdemo");
@@ -292,10 +307,10 @@ public class AllAppsActivity extends ListActivity {
 
 
 
-	private class PushData extends AsyncTask<Map<String,String>, Void, Void> {
+	private class PushData extends AsyncTask<Map<String,String>, Void, Boolean> {
 		@Override
 		//protected Void doInBackground(Map... mapVals) {
-		protected Void doInBackground(Map<String,String>... maps) {
+		protected Boolean doInBackground(Map<String,String>... maps) {
 			/*
 			//int count = urls.length;
 			long totalSize = 0;
@@ -444,7 +459,7 @@ public class AllAppsActivity extends ListActivity {
 
 		}
 
-
+		/*
 		private String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException
 		{
 			StringBuilder result = new StringBuilder();
@@ -464,7 +479,7 @@ public class AllAppsActivity extends ListActivity {
 
 			return result.toString();
 		}
-
+		*/
 
 
 
@@ -474,8 +489,14 @@ public class AllAppsActivity extends ListActivity {
 			//setProgressPercent(progress[0]);
 		}
 
-		protected void onPostExecute(Long result) {
+		//@Override
+		protected void onPostExecute(Boolean result) {
 			//showDialog("Downloaded " + result + " bytes");
+			progressDone++;
+			progress.setProgress(progressDone);
+			if (progressDone == applist.size()) {
+				progress.dismiss();
+			}
 		}
 	}
 
