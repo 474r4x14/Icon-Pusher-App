@@ -1,8 +1,7 @@
-package com.javatechig.listapps;
+package com.defenestrateme.pusher;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,11 +31,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
-import org.apache.http.NameValuePair;
 import android.provider.Settings.Secure;
 
 
-public class AllAppsActivity extends ListActivity {
+public class AppListerActivity extends ListActivity {
 	private PackageManager packageManager = null;
 	private List<ApplicationInfo> applist = null;
 	private ApplicationAdapter listadaptor = null;
@@ -282,7 +280,7 @@ public class AllAppsActivity extends ListActivity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			applist = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
-			listadaptor = new ApplicationAdapter(AllAppsActivity.this,
+			listadaptor = new ApplicationAdapter(AppListerActivity.this,
 					R.layout.snippet_list_row, applist);
 
 			return null;
@@ -302,7 +300,7 @@ public class AllAppsActivity extends ListActivity {
 
 		@Override
 		protected void onPreExecute() {
-			progress = ProgressDialog.show(AllAppsActivity.this, null,
+			progress = ProgressDialog.show(AppListerActivity.this, null,
 					"Loading application info...");
 			super.onPreExecute();
 		}

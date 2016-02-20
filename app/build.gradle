@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.javatechig.listapps"
+        applicationId "com.defenestrateme.pusher"
         minSdkVersion 8
         targetSdkVersion 17
     }
