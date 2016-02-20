@@ -148,7 +148,16 @@ public class AllAppsActivity extends ListActivity {
 
 		ComponentName tmp = intent.getComponent();
 
-		theMap.put("className", tmp.getClassName());
+		ApplicationInfo ai;
+		try {
+			ai = pm.getApplicationInfo( appInfo.packageName, 0);
+		} catch (final PackageManager.NameNotFoundException e) {
+			ai = null;
+		}
+		final String applicationName = (String) (ai != null ? pm.getApplicationLabel(ai) : "(unknown)");
+
+		theMap.put("appName", applicationName);
+		theMap.put("componentInfo", tmp.getClassName());
 
 		theMap.put("packageName", appInfo.packageName);
 
@@ -185,7 +194,7 @@ public class AllAppsActivity extends ListActivity {
 
 
 		//builder.setMessage(tmp1 + "\n\n" + tmp10 + "\n")
-		builder.setMessage(appData.get("packageName") + "\n\n" + appData.get("componentInfo") + "\n")
+		builder.setMessage(appData.get("appName") + "\n" + appData.get("packageName") + "\n" + appData.get("componentInfo") + "\n")
 				.setPositiveButton(R.string.fire, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
 						// FIRE ZE MISSILES!
@@ -359,7 +368,7 @@ public class AllAppsActivity extends ListActivity {
 
 				try{
 	//if you are using https, make sure to import java.net.HttpsURLConnection
-					url=new URL("https://defenestrate.me/icons.php");
+					url=new URL("http://icons.defenestrate.me/push");
 
 	//you need to encode ONLY the values of the parameters
 					/*
