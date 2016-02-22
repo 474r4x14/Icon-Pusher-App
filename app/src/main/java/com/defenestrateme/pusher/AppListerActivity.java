@@ -187,7 +187,7 @@ public class AppListerActivity extends ListActivity {
 		//String tmp1 = app.packageName + "!!!";
 
 
-		Map appData = getPackageData(app);
+		final Map appData = getPackageData(app);
 
 
 
@@ -196,6 +196,7 @@ public class AppListerActivity extends ListActivity {
 				.setPositiveButton(R.string.fire, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
 						// FIRE ZE MISSILES!
+						new PushData().execute(appData);
 					}
 				})
 				.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -499,10 +500,12 @@ public class AppListerActivity extends ListActivity {
 		//@Override
 		protected void onPostExecute(Boolean result) {
 			//showDialog("Downloaded " + result + " bytes");
-			progressDone++;
-			progress.setProgress(progressDone);
-			if (progressDone == applist.size()) {
-				progress.dismiss();
+			if (progress != null) {
+				progressDone++;
+				progress.setProgress(progressDone);
+				if (progressDone == applist.size()) {
+					progress.dismiss();
+				}
 			}
 		}
 	}
