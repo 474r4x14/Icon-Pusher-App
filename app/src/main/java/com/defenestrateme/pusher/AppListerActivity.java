@@ -22,6 +22,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,6 +33,9 @@ import android.view.View;
 import android.widget.ListView;
 
 import android.provider.Settings.Secure;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 
 public class AppListerActivity extends ListActivity {
@@ -48,7 +52,26 @@ public class AppListerActivity extends ListActivity {
 
 		packageManager = getPackageManager();
 
+
+		String android_id = Secure.getString(this.getContentResolver(),
+			Secure.ANDROID_ID);
+
+		TextView androidIdTxt = (TextView) findViewById(R.id.android_id_txt);
+		androidIdTxt.setText("Android ID: "+android_id+"\nClick here to view on site");
+
+
+
+
 		new LoadApplications().execute();
+	}
+
+	public void idClick(View view)
+	{
+		Log.w("doird","meh");
+		String android_id = Secure.getString(this.getContentResolver(),
+			Secure.ANDROID_ID);
+		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://icons.defenestrate.me/device/"+android_id));
+		startActivity(browserIntent);
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
