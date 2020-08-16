@@ -62,6 +62,11 @@ public class AppListerActivity extends ListActivity {
 		boolean result = true;
 
 		switch (item.getItemId()) {
+		case R.id.menu_send: {
+			displaySendDialog();
+
+			break;
+		}
 		case R.id.menu_about: {
 			displayAboutDialog();
 
@@ -77,13 +82,13 @@ public class AppListerActivity extends ListActivity {
 		return result;
 	}
 
-	private void displayAboutDialog() {
+	private void displaySendDialog() {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(getString(R.string.about_title));
+		builder.setTitle(getString(R.string.send_title));
 		builder.setMessage(getString(R.string.send_data));
 
 		progress=new ProgressDialog(this);
-		builder.setPositiveButton("Know More", new DialogInterface.OnClickListener() {
+		builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				//Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://javatechig.com"));
 				//startActivity(browserIntent);
@@ -129,12 +134,26 @@ public class AppListerActivity extends ListActivity {
 				dialog.cancel();
 			}
 		});
-		builder.setNegativeButton("No Thanks!", new DialogInterface.OnClickListener() {
+		builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.cancel();
 			}
 		});
 		 
+		builder.show();
+	}
+
+	private void displayAboutDialog() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.info_title));
+		builder.setMessage(getString(R.string.info_data));
+
+		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				dialog.cancel();
+			}
+		});
+
 		builder.show();
 	}
 
@@ -193,7 +212,7 @@ public class AppListerActivity extends ListActivity {
 
 		//builder.setMessage(tmp1 + "\n\n" + tmp10 + "\n")
 		builder.setMessage(appData.get("appName") + "\n" + appData.get("packageName") + "\n" + appData.get("componentInfo") + "\n")
-				.setPositiveButton(R.string.fire, new DialogInterface.OnClickListener() {
+				.setPositiveButton(R.string.submit_icon, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
 						// FIRE ZE MISSILES!
 						new PushData().execute(appData);
@@ -367,7 +386,7 @@ public class AppListerActivity extends ListActivity {
 
 				try{
 	//if you are using https, make sure to import java.net.HttpsURLConnection
-					url=new URL("http://icons.defenestrate.me/push");
+					url=new URL("https://icons.defenestrate.me/push");
 
 	//you need to encode ONLY the values of the parameters
 					/*
