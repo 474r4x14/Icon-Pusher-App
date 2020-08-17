@@ -22,6 +22,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -52,6 +53,7 @@ public class AppListerActivity extends AppCompatActivity {
 	public static ArrayList<CheckBox> checkboxes = new ArrayList<>();
 
 	private Boolean checkAll = false;
+	private ArrayList<Request> pushList = new ArrayList<>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -136,9 +138,25 @@ public class AppListerActivity extends AppCompatActivity {
 	}
 
 	private void displaySendDialog() {
+
+		// Let's build the request list
+		pushList.clear();
+		for (int i=0; i < applist.size(); i++) {
+			Request request = applist.get(i);
+			if (request.selected) {
+				pushList.add(request);
+			}
+		}
+
+		if (pushList.size() == 0) {
+			Toast.makeText(this, "Please select at least one app", Toast.LENGTH_SHORT ).show();
+
+			return;
+		}
+
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.send_title));
-		builder.setMessage(getString(R.string.send_data));
+		builder.setMessage("Do you want to push these "+pushList.size()+" apps?");
 
 		progress=new ProgressDialog(this);
 		builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
@@ -157,14 +175,14 @@ public class AppListerActivity extends AppCompatActivity {
 				progress.setMessage("Sending App Details");
 				progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 				progress.setProgress(0);
-				progress.setMax(applist.size());
+				progress.setMax(pushList.size());
 				progress.show();
 
 				Thread mThread = new Thread() {
 					@Override
 					public void run() {
-						for (int i = 0; i < applist.size(); i++) {
-							ApplicationInfo info = applist.get(i).info;
+						for (int i = 0; i < pushList.size(); i++) {
+							ApplicationInfo info = pushList.get(i).info;
 							//System.out.println(applist.get(i));
 							Map appData = getPackageData(info);
 							new PushData().execute(appData);
@@ -535,7 +553,7 @@ public class AppListerActivity extends AppCompatActivity {
 			if (progress != null) {
 				progressDone++;
 				progress.setProgress(progressDone);
-				if (progressDone == applist.size()) {
+				if (progressDone == pushList.size()) {
 					progress.dismiss();
 				}
 			}
