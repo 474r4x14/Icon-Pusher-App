@@ -51,6 +51,8 @@ public class AppListerActivity extends AppCompatActivity {
 	public ListView mainListView;
 	public static ArrayList<CheckBox> checkboxes = new ArrayList<>();
 
+	private Boolean checkAll = false;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -110,12 +112,11 @@ public class AppListerActivity extends AppCompatActivity {
 
 		switch (item.getItemId()) {
 			case R.id.menu_select_all: {
+				checkAll = !checkAll;
 				for (int i = 0; i < applist.size(); i++) {
-//					AppListerActivity.checkboxes.get(i).setChecked(true);
-					applist.get(i).selected = true;
+					applist.get(i).selected = checkAll;
 				}
 				listadaptor.notifyDataSetChanged();
-				// SELECT ALL
 				break;
 			}
 			default: {
