@@ -5,10 +5,13 @@ import java.util.List;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,6 +26,7 @@ public class ApplicationAdapter extends ArrayAdapter<Request> {
 		this.context = context;
 		this.appsList = appsList;
 		packageManager = context.getPackageManager();
+
 	}
 
 	@Override
@@ -48,15 +52,18 @@ public class ApplicationAdapter extends ArrayAdapter<Request> {
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			view = layoutInflater.inflate(R.layout.snippet_list_row, null);
 		}
-		ApplicationInfo data = appsList.get(position).info;
+		final Request request = appsList.get(position);
+		ApplicationInfo data = request.info;
 		if (null != data) {
 			TextView appName = (TextView) view.findViewById(R.id.app_name);
 			TextView packageName = (TextView) view.findViewById(R.id.app_paackage);
 			ImageView iconview = (ImageView) view.findViewById(R.id.app_icon);
-
+			CheckBox checkBox = (CheckBox) view.findViewById(R.id.checkbox);
+			AppListerActivity.checkboxes.add(checkBox);
 			appName.setText(data.loadLabel(packageManager));
 			packageName.setText(data.packageName);
 			iconview.setImageDrawable(data.loadIcon(packageManager));
+			checkBox.setChecked(request.selected);
 		}
 		return view;
 	}

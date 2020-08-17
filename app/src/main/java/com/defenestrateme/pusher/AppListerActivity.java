@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -16,8 +17,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import android.widget.AdapterView.OnItemClickListener;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -40,11 +44,12 @@ import java.util.Scanner;
 
 public class AppListerActivity extends AppCompatActivity {
 	private PackageManager packageManager = null;
-	private List<ApplicationInfo> applist = null;
+	private List<Request> applist = null;
 	private ApplicationAdapter listadaptor = null;
 	private ProgressDialog progress;
 	private Integer progressDone = 0;
 	public ListView mainListView;
+	public static ArrayList<CheckBox> checkboxes = new ArrayList<>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -60,6 +65,12 @@ public class AppListerActivity extends AppCompatActivity {
 
 		TextView androidIdTxt = (TextView) findViewById(R.id.android_id_txt);
 		androidIdTxt.setText("Android ID: "+android_id+"\nClick here to view on site");
+
+
+//		mainListView = (ListView) findViewById(R.id.mainListView);
+//		mainListView.setClickable(true);
+
+
 
 
 
@@ -99,6 +110,11 @@ public class AppListerActivity extends AppCompatActivity {
 
 		switch (item.getItemId()) {
 			case R.id.menu_select_all: {
+				for (int i = 0; i < applist.size(); i++) {
+//					AppListerActivity.checkboxes.get(i).setChecked(true);
+					applist.get(i).selected = true;
+				}
+				listadaptor.notifyDataSetChanged();
 				// SELECT ALL
 				break;
 			}
@@ -147,7 +163,7 @@ public class AppListerActivity extends AppCompatActivity {
 					@Override
 					public void run() {
 						for (int i = 0; i < applist.size(); i++) {
-							ApplicationInfo info = applist.get(i);
+							ApplicationInfo info = applist.get(i).info;
 							//System.out.println(applist.get(i));
 							Map appData = getPackageData(info);
 							new PushData().execute(appData);
@@ -179,20 +195,6 @@ public class AppListerActivity extends AppCompatActivity {
 		builder.show();
 	}
 
-	private void displayAboutDialog() {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(getString(R.string.info_title));
-		builder.setMessage(getString(R.string.info_data));
-
-		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.cancel();
-			}
-		});
-
-		builder.show();
-	}
-
 
 	private Map getPackageData(ApplicationInfo appInfo) {
 		Map theMap = new HashMap<>();
@@ -220,52 +222,6 @@ public class AppListerActivity extends AppCompatActivity {
 		theMap.put("android_id", android_id);
 		return theMap;
 	}
-
-
-/*
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
-
-		ApplicationInfo app = applist.get(position);
-		// TODO move this into a method return a Map
-		// System.out.println(map.get("Color2")); // Blue
-
-
-		//final PackageManager pm = getApplicationContext().getPackageManager();
-		//Intent intent=pm.getLaunchIntentForPackage(app.packageName);
-
-		//ComponentName tmp = intent.getComponent();
-		//String tmp10 = tmp.getClassName();
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		//String tmp1 = app.packageName + "!!!";
-
-
-		final Map appData = getPackageData(app);
-
-
-
-		//builder.setMessage(tmp1 + "\n\n" + tmp10 + "\n")
-		builder.setMessage(appData.get("appName") + "\n" + appData.get("packageName") + "\n" + appData.get("componentInfo") + "\n")
-				.setPositiveButton(R.string.submit_icon, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						// FIRE ZE MISSILES!
-						new PushData().execute(appData);
-					}
-				})
-				.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						// User cancelled the dialog
-					}
-				});
-		// Create the AlertDialog object and return it
-		//return builder.create();
-		builder.create().show();
-
-
-	}
-*/
 
 
 
@@ -312,26 +268,31 @@ public class AppListerActivity extends AppCompatActivity {
 		return applist;
 	}
 
+
+	public void itemClicked(View view)
+	{
+		Log.w("clkd","??");
+	}
+
+
 	private class LoadApplications extends AsyncTask<Void, Void, Void> {
 		private ProgressDialog progress = null;
 
 		@Override
 		protected Void doInBackground(Void... params) {
-			applist = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
-
-			// THIS
+			List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
 
 
-			List<Request> requests = new ArrayList<Request>();
-			for (Integer i = 0; i < applist.size(); i++) {
+			applist = new ArrayList<>();
+			for (Integer i = 0; i < tmpList.size(); i++) {
 				Request request = new Request();
-				request.info = applist.get(i);
-				requests.add(request);
+				request.info = tmpList.get(i);
+				applist.add(request);
 
 			}
 
 			listadaptor = new ApplicationAdapter(AppListerActivity.this,
-					R.layout.snippet_list_row, requests);
+					R.layout.snippet_list_row, applist);
 
 			return null;
 		}
@@ -346,6 +307,25 @@ public class AppListerActivity extends AppCompatActivity {
 //			setListAdapter(listadaptor);
 			mainListView = (ListView) findViewById(R.id.mainListView);
 			mainListView.setAdapter(listadaptor);
+
+			mainListView.setClickable(true);
+//			mainListView.setItemsCanFocus(false);
+
+
+
+			mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				public void onItemClick (final AdapterView<?> parent, View view, int position, long id) {
+//					final String item = (String) parent.getItemAtPosition(position);
+					Log.w("GOT pos",""+position);
+					Request request = applist.get(position);
+					request.selected = !request.selected;
+					listadaptor.notifyDataSetChanged();
+//					Log.w("GOT",request.info.name);
+				} });
+
+
+
+
 			progress.dismiss();
 			super.onPostExecute(result);
 		}

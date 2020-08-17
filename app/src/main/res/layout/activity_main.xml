@@ -45,6 +45,8 @@
         android:layout_height="wrap_content"
         android:clipToPadding="false"
         android:paddingBottom="80dp"
+        android:descendantFocusability="blocksDescendants"
+        android:clickable="true"
         >
 
     </ListView>
