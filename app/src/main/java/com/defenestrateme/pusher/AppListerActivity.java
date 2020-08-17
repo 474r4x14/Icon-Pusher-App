@@ -73,13 +73,22 @@ public class AppListerActivity extends ListActivity {
 		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://icons.defenestrate.me/device/"+android_id));
 		startActivity(browserIntent);
 	}
-
+/*
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.menu, menu);
 
 		return true;
 	}
+*/
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.menu, menu);
+		return true;
+	}
+
 
 	public boolean onOptionsItemSelected(MenuItem item) {
 		boolean result = true;
