@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -66,6 +67,8 @@ public class AppListerActivity extends AppCompatActivity {
 		new LoadApplications().execute();
 	}
 
+
+
 	public void idClick(View view)
 	{
 		Log.w("doird","meh");
@@ -95,27 +98,24 @@ public class AppListerActivity extends AppCompatActivity {
 		boolean result = true;
 
 		switch (item.getItemId()) {
-		case R.id.menu_send: {
-			displaySendDialog();
+			case R.id.menu_select_all: {
+				// SELECT ALL
+				break;
+			}
+			default: {
+				result = super.onOptionsItemSelected(item);
 
-			break;
-		}
-		/*
-		case R.id.menu_about: {
-			displayAboutDialog();
-
-			break;
-		}
-		
-		 */
-		default: {
-			result = super.onOptionsItemSelected(item);
-
-			break;
-		}
+				break;
+			}
 		}
 
 		return result;
+	}
+
+
+	public void sendTest(View view)
+	{
+		displaySendDialog();
 	}
 
 	private void displaySendDialog() {
@@ -266,6 +266,11 @@ public class AppListerActivity extends AppCompatActivity {
 
 	}
 */
+
+
+
+
+
 	private List<ApplicationInfo> checkForLaunchIntent(List<ApplicationInfo> list) {
 		ArrayList<ApplicationInfo> applist = new ArrayList<ApplicationInfo>();
 		for (ApplicationInfo info : list) {
@@ -313,8 +318,20 @@ public class AppListerActivity extends AppCompatActivity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			applist = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
+
+			// THIS
+
+
+			List<Request> requests = new ArrayList<Request>();
+			for (Integer i = 0; i < applist.size(); i++) {
+				Request request = new Request();
+				request.info = applist.get(i);
+				requests.add(request);
+
+			}
+
 			listadaptor = new ApplicationAdapter(AppListerActivity.this,
-					R.layout.snippet_list_row, applist);
+					R.layout.snippet_list_row, requests);
 
 			return null;
 		}

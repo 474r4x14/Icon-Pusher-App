@@ -59,5 +59,6 @@
         android:src="@android:drawable/ic_menu_send"
         android:layout_gravity="bottom|right"
         android:layout_margin="16dp"
+        android:onClick="sendTest"
         />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

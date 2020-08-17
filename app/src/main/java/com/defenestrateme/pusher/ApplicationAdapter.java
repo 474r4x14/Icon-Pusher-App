@@ -12,13 +12,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
-	private List<ApplicationInfo> appsList = null;
+public class ApplicationAdapter extends ArrayAdapter<Request> {
+	private List<Request> appsList = null;
 	private Context context;
 	private PackageManager packageManager;
 
 	public ApplicationAdapter(Context context, int textViewResourceId,
-			List<ApplicationInfo> appsList) {
+			List<Request> appsList) {
 		super(context, textViewResourceId, appsList);
 		this.context = context;
 		this.appsList = appsList;
@@ -31,7 +31,7 @@ public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
 	}
 
 	@Override
-	public ApplicationInfo getItem(int position) {
+	public Request getItem(int position) {
 		return ((null != appsList) ? appsList.get(position) : null);
 	}
 
@@ -48,8 +48,7 @@ public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			view = layoutInflater.inflate(R.layout.snippet_list_row, null);
 		}
-
-		ApplicationInfo data = appsList.get(position);
+		ApplicationInfo data = appsList.get(position).info;
 		if (null != data) {
 			TextView appName = (TextView) view.findViewById(R.id.app_name);
 			TextView packageName = (TextView) view.findViewById(R.id.app_paackage);
