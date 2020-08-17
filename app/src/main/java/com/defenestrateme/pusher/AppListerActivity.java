@@ -1,5 +1,27 @@
 package com.defenestrateme.pusher;
 
+import android.app.ListActivity;
+import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.provider.Settings.Secure;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -14,41 +36,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import android.app.AlertDialog;
-import android.app.ListActivity;
-import android.app.ProgressDialog;
-import android.content.ComponentName;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ListView;
 
-import android.provider.Settings.Secure;
-import android.widget.TextView;
-
-import org.w3c.dom.Text;
-
-
-public class AppListerActivity extends ListActivity {
+public class AppListerActivity extends AppCompatActivity {
 	private PackageManager packageManager = null;
 	private List<ApplicationInfo> applist = null;
 	private ApplicationAdapter listadaptor = null;
 	private ProgressDialog progress;
 	private Integer progressDone = 0;
+	public ListView mainListView;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
 		packageManager = getPackageManager();
 
@@ -99,11 +100,14 @@ public class AppListerActivity extends ListActivity {
 
 			break;
 		}
+		/*
 		case R.id.menu_about: {
 			displayAboutDialog();
 
 			break;
 		}
+		
+		 */
 		default: {
 			result = super.onOptionsItemSelected(item);
 
@@ -218,7 +222,7 @@ public class AppListerActivity extends ListActivity {
 	}
 
 
-
+/*
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
@@ -259,32 +263,9 @@ public class AppListerActivity extends ListActivity {
 		//return builder.create();
 		builder.create().show();
 
-		/*
-		String android_id = Secure.getString(this.getContentResolver(),
-				Secure.ANDROID_ID);
-
-		Log.w("android id?!",android_id);
-		*/
-		/*
-		ApplicationInfo app = applist.get(position);
-		try {
-			Intent intent = packageManager
-					.getLaunchIntentForPackage(app.packageName);
-
-			if (null != intent) {
-				startActivity(intent);
-			}
-		} catch (ActivityNotFoundException e) {
-			Toast.makeText(AllAppsActivity.this, e.getMessage(),
-					Toast.LENGTH_LONG).show();
-		} catch (Exception e) {
-			Toast.makeText(AllAppsActivity.this, e.getMessage(),
-					Toast.LENGTH_LONG).show();
-		}
-		*/
 
 	}
-
+*/
 	private List<ApplicationInfo> checkForLaunchIntent(List<ApplicationInfo> list) {
 		ArrayList<ApplicationInfo> applist = new ArrayList<ApplicationInfo>();
 		for (ApplicationInfo info : list) {
@@ -345,7 +326,9 @@ public class AppListerActivity extends ListActivity {
 
 		@Override
 		protected void onPostExecute(Void result) {
-			setListAdapter(listadaptor);
+//			setListAdapter(listadaptor);
+			mainListView = (ListView) findViewById(R.id.mainListView);
+			mainListView.setAdapter(listadaptor);
 			progress.dismiss();
 			super.onPostExecute(result);
 		}
