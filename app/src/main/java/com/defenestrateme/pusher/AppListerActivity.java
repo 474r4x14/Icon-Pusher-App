@@ -139,6 +139,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 	private void displaySendDialog() {
 
+		progressDone = 0;
 		// Let's build the request list
 		pushList.clear();
 		for (int i=0; i < applist.size(); i++) {
@@ -417,7 +418,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 				try{
 	//if you are using https, make sure to import java.net.HttpsURLConnection
-					url=new URL("https://icons.defenestrate.me/push");
+					url=new URL("https://icons.southpaw.dev/push");
 
 	//you need to encode ONLY the values of the parameters
 					/*
