@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "dev.southpaw.iconpusher"
         minSdkVersion 14
-        targetSdkVersion 28
+        targetSdkVersion 29
     }
 
     buildTypes {
