@@ -88,7 +88,7 @@ public class AppListerActivity extends AppCompatActivity {
 		Log.w("doird","meh");
 		String android_id = Secure.getString(this.getContentResolver(),
 			Secure.ANDROID_ID);
-		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://icons.southpaw.dev/device/"+android_id));
+		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://iconpusher.com/device/"+android_id));
 		startActivity(browserIntent);
 	}
 /*
@@ -228,6 +228,11 @@ public class AppListerActivity extends AppCompatActivity {
 				Log.w("myApp", "finished pushdata");
 
 
+				for (int i=0; i < applist.size(); i++) {
+					applist.get(i).selected = false;
+				}
+				listadaptor.notifyDataSetChanged();
+
 				dialog.cancel();
 			}
 		});
@@ -264,7 +269,8 @@ public class AppListerActivity extends AppCompatActivity {
 		String android_id = Secure.getString(this.getContentResolver(),
 				Secure.ANDROID_ID);
 
-		theMap.put("android_id", android_id);
+		theMap.put("androidId", android_id);
+		theMap.put("iconPack", getApplicationContext().getPackageName());
 		return theMap;
 	}
 
@@ -443,7 +449,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 				try{
 	//if you are using https, make sure to import java.net.HttpsURLConnection
-					url=new URL("https://icons.southpaw.dev/push");
+					url=new URL("https://iconpusher.com/push");
 
 	//you need to encode ONLY the values of the parameters
 					/*
