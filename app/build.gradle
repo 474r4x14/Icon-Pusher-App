@@ -5,7 +5,7 @@ android {
     buildToolsVersion '26.0.2'
 
     defaultConfig {
-        applicationId "com.defenestrateme.pusher"
+        applicationId "dev.southpaw.iconpusher"
         minSdkVersion 14
         targetSdkVersion 28
     }

@@ -1,4 +1,4 @@
-package com.defenestrateme.pusher;
+package dev.southpaw.iconpusher;
 
 import android.content.pm.ApplicationInfo;
 import android.graphics.drawable.Drawable;

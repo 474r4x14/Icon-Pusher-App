@@ -1,12 +1,10 @@
-package com.defenestrateme.pusher;
+package dev.southpaw.iconpusher;
 
-import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -21,12 +19,13 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import dev.southpaw.iconpusher.R;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -89,7 +88,7 @@ public class AppListerActivity extends AppCompatActivity {
 		Log.w("doird","meh");
 		String android_id = Secure.getString(this.getContentResolver(),
 			Secure.ANDROID_ID);
-		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://icons.defenestrate.me/device/"+android_id));
+		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://icons.southpaw.dev/device/"+android_id));
 		startActivity(browserIntent);
 	}
 /*
@@ -137,6 +136,10 @@ public class AppListerActivity extends AppCompatActivity {
 		displaySendDialog();
 	}
 
+
+	static Boolean isRunning = true;
+
+
 	private void displaySendDialog() {
 
 		progressDone = 0;
@@ -158,6 +161,7 @@ public class AppListerActivity extends AppCompatActivity {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(getString(R.string.send_title));
 		builder.setMessage("Do you want to push these "+pushList.size()+" apps?");
+		builder.setCancelable(false);
 
 		progress=new ProgressDialog(this);
 		builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
@@ -172,17 +176,36 @@ public class AppListerActivity extends AppCompatActivity {
 
 				//Map<String, String> map = new HashMap<>();
 
+				progress.setCancelable(false);
 
 				progress.setMessage("Sending App Details");
 				progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 				progress.setProgress(0);
 				progress.setMax(pushList.size());
-				progress.show();
 
-				Thread mThread = new Thread() {
+				isRunning = true;
+
+
+				progress.setButton("Cancel", new DialogInterface.OnClickListener()
+				{
+					public void onClick(DialogInterface dialog, int which)
+					{
+//						pushList.clear();
+						isRunning = false;
+						// Use either finish() or return() to either close the activity or just the dialog
+						return;
+					}
+				});
+
+
+
+				final Thread mThread = new Thread() {
 					@Override
 					public void run() {
 						for (int i = 0; i < pushList.size(); i++) {
+							if (!isRunning) {
+								break;
+							}
 							ApplicationInfo info = pushList.get(i).info;
 							//System.out.println(applist.get(i));
 							Map appData = getPackageData(info);
@@ -192,6 +215,8 @@ public class AppListerActivity extends AppCompatActivity {
 						//progress.dismiss();
 					}
 				};
+
+				progress.show();
 				mThread.start();
 
 				//map.put("name", "demo");

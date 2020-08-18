@@ -1,19 +1,19 @@
-package com.defenestrateme.pusher;
+package dev.southpaw.iconpusher;
 
 import java.util.List;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import dev.southpaw.iconpusher.R;
 
 public class ApplicationAdapter extends ArrayAdapter<Request> {
 	private List<Request> appsList = null;
