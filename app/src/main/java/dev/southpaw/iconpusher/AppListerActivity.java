@@ -387,11 +387,6 @@ public class AppListerActivity extends AppCompatActivity {
 					"Loading application info...");
 			super.onPreExecute();
 		}
-
-		@Override
-		protected void onProgressUpdate(Void... values) {
-			super.onProgressUpdate(values);
-		}
 	}
 
 
