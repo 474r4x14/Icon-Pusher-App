@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings.Secure;
+import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -112,6 +113,10 @@ public class AppListerActivity extends AppCompatActivity {
 		boolean result = true;
 
 		switch (item.getItemId()) {
+			case R.id.menu_info: {
+				displayAboutDialog();
+				break;
+			}
 			case R.id.menu_select_all: {
 				checkAll = !checkAll;
 				for (int i = 0; i < applist.size(); i++) {
@@ -129,6 +134,45 @@ public class AppListerActivity extends AppCompatActivity {
 
 		return result;
 	}
+
+
+	private void displayAboutDialog() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.info_title));
+		builder.setMessage(getString(R.string.info_data));
+
+		builder.setNeutralButton("Privacy Policy",new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				displayPrivacyDialog();
+			}
+		});
+
+		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				dialog.cancel();
+			}
+		});
+		builder.show();
+	}
+
+
+	private void displayPrivacyDialog() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.privacy_title));
+		builder.setMessage(getString(R.string.info_data));
+		builder.setMessage(Html.fromHtml(getString(R.string.privacy_data_1)+"<br/><br/><b>Data collected</b><br/>"+ getString(R.string.privacy_data_2)+"<br/><br/>" +
+				"<b>What happens to the data</b><br/>"+getString(R.string.privacy_data_3)+"<br/><br/>" +
+				getString(R.string.privacy_data_4)));
+
+		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				dialog.cancel();
+			}
+		});
+		builder.show();
+	}
+
+
 
 
 	public void sendTest(View view)

@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools" tools:context="dev.southpaw.iconpusher.AppListerActivity">
 
     <item
+        android:id="@+id/menu_info"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="add"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/menu_select_all"
         android:icon="?attr/actionModeSelectAllDrawable"
         android:title="add"
