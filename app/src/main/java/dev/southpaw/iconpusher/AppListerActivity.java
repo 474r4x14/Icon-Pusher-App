@@ -1,16 +1,30 @@
 package dev.southpaw.iconpusher;
 
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.AdaptiveIconDrawable;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings.Secure;
 import android.text.Html;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,8 +40,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import dev.southpaw.iconpusher.R;
-
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -252,8 +270,8 @@ public class AppListerActivity extends AppCompatActivity {
 							}
 							ApplicationInfo info = pushList.get(i).info;
 							//System.out.println(applist.get(i));
-							Map appData = getPackageData(info);
-							new PushData().execute(appData);
+//							Map appData = getPackageData(info);
+							new PushData().execute(info);
 							//progress.setProgress(i);
 						}
 						//progress.dismiss();
@@ -290,7 +308,7 @@ public class AppListerActivity extends AppCompatActivity {
 	}
 
 
-	private Map getPackageData(ApplicationInfo appInfo) {
+	private Map<String,String> getPackageData(ApplicationInfo appInfo) {
 		Map theMap = new HashMap<>();
 		final PackageManager pm = getApplicationContext().getPackageManager();
 		Intent intent=pm.getLaunchIntentForPackage(appInfo.packageName);
@@ -436,10 +454,10 @@ public class AppListerActivity extends AppCompatActivity {
 
 
 
-	private class PushData extends AsyncTask<Map<String,String>, Void, Boolean> {
+	private class PushData extends AsyncTask<ApplicationInfo, Void, Boolean> {
 		@Override
 		//protected Void doInBackground(Map... mapVals) {
-		protected Boolean doInBackground(Map<String,String>... maps) {
+		protected Boolean doInBackground(ApplicationInfo... appInfos) {
 			/*
 			//int count = urls.length;
 			long totalSize = 0;
@@ -454,7 +472,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 
 
-			int count = maps.length;
+			int count = appInfos.length;
 			//long totalSize = 0;
 			for (int i = 0; i < count; i++) {
 				//totalSize += Downloader.downloadFile(mapVals[i]);
@@ -484,10 +502,37 @@ public class AppListerActivity extends AppCompatActivity {
 
 	//do this wherever you are wanting to POST
 				URL url;
-				HttpURLConnection conn;
+//				HttpURLConnection conn;
+
+
+
+
+
+
+				HttpURLConnection conn = null;
+				DataOutputStream dos = null;
+				DataInputStream inStream = null;
+//				String existingFileName = file_path;
+				String lineEnd = "\r\n";
+				String twoHyphens = "--";
+				String boundary =  "*****";
+				int bytesRead, bytesAvailable, bufferSize;
+				byte[] buffer;
+				int maxBufferSize = 1*1024*1024;
+				String upload_file_name = "icon";
+
+
+
+
 
 				try{
-	//if you are using https, make sure to import java.net.HttpsURLConnection
+					ApplicationInfo appInfo = appInfos[i];
+					Map<String,String> map = getPackageData(appInfo);
+
+					PackageManager pm = getApplicationContext().getPackageManager();
+					PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
+
+					//if you are using https, make sure to import java.net.HttpsURLConnection
 					url=new URL("https://iconpusher.com/push");
 
 	//you need to encode ONLY the values of the parameters
@@ -497,7 +542,7 @@ public class AppListerActivity extends AppCompatActivity {
 					"&param3="+URLEncoder.encode("value3","UTF-8");
 	*/
 					String param = "";
-					for (Map.Entry<String, String> entry : maps[i].entrySet())
+					for (Map.Entry<String, String> entry : map.entrySet())
 					{
 						//System.out.println(entry.getKey() + "/" + entry.getValue());
 
@@ -508,54 +553,121 @@ public class AppListerActivity extends AppCompatActivity {
 						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
 					}
 
+					Drawable icon = getIconFromPackageName(appInfo.packageName, getApplicationContext());
+					Bitmap bitmap = drawableToBitmap(icon);
+
+
+//create a file to write bitmap data
+					File file = new File( getApplicationContext().getCacheDir(), "icon");
+					file.createNewFile();
+
+//Convert bitmap to byte array
+//					Bitmap bitmap = your bitmap;
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+					byte[] bitmapdata = bos.toByteArray();
+
+//write the bytes in file
+					FileOutputStream fos = new FileOutputStream(file);
+					fos.write(bitmapdata);
+					fos.flush();
+					fos.close();
 
 
 
 
-
-
-					conn=(HttpURLConnection)url.openConnection();
-	//set the output to true, indicating you are outputting(uploading) POST data
+					//------------------ CLIENT REQUEST
+					FileInputStream fileInputStream = new FileInputStream(file);
+					// open a URL connection to the Servlet
+//					URL url = new URL(urlString);
+					// Open a HTTP connection to the URL
+					conn = (HttpURLConnection) url.openConnection();
+					// Allow Inputs
+					conn.setDoInput(true);
+					// Allow Outputs
 					conn.setDoOutput(true);
-	//once you set the output to true, you don’t really need to set the request method to post, but I’m doing it anyway
+					// Don't use a cached copy.
+					conn.setUseCaches(false);
+					// Use a post method.
 					conn.setRequestMethod("POST");
-
-	//Android documentation suggested that you set the length of the data you are sending to the server, BUT
-	// do NOT specify this length in the header by using conn.setRequestProperty(“Content-Length”, length);
-	//use this instead.
-					conn.setFixedLengthStreamingMode(param.getBytes().length);
-					conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-	//send the POST out
-
-					PrintWriter out = new PrintWriter(conn.getOutputStream());
-					out.print(param);
-					out.close();
-
-	//build the string to store the response text from the server
-					String response= "";
-
-	//start listening to the stream
-
-					Scanner inStream = new Scanner(conn.getInputStream());
-
-	//process the stream and store it in StringBuilder
-					while(inStream.hasNextLine())
-						response+=(inStream.nextLine());
+					conn.setRequestProperty("Connection", "Keep-Alive");
+					conn.setRequestProperty("Content-Type", "multipart/form-data;boundary="+boundary);
+					dos = new DataOutputStream( conn.getOutputStream() );
+					dos.writeBytes(twoHyphens + boundary + lineEnd);
 
 
-					Log.w("myApp","response was " + response);
+					dos.writeBytes("Content-Disposition: form-data; name=\"version\""+ lineEnd);
+					dos.writeBytes(lineEnd);
+					dos.writeBytes(pi.versionName);
+					dos.writeBytes(lineEnd);
+					dos.writeBytes(twoHyphens + boundary + lineEnd);
+
+					for (Map.Entry<String, String> entry : map.entrySet())
+					{
+						//System.out.println(entry.getKey() + "/" + entry.getValue());
+
+//						if (param != "") {
+//							param += "&";
+//						}
+
+//						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
+
+						dos.writeBytes("Content-Disposition: form-data; name=\""+entry.getKey()+"\""+ lineEnd);
+						dos.writeBytes(lineEnd);
+						dos.writeBytes(entry.getValue());
+						dos.writeBytes(lineEnd);
+						dos.writeBytes(twoHyphens + boundary + lineEnd);
+
+
+
+					}
+
+
+
+
+
+					dos.writeBytes("Content-Disposition: form-data; name=\"uploadedfile\";filename=\"" + upload_file_name + "\"" + lineEnd); // uploaded_file_name is the Name of the File to be uploaded
+					dos.writeBytes(lineEnd);
+					bytesAvailable = fileInputStream.available();
+					bufferSize = Math.min(bytesAvailable, maxBufferSize);
+					buffer = new byte[bufferSize];
+					bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+					while (bytesRead > 0){
+						dos.write(buffer, 0, bufferSize);
+						bytesAvailable = fileInputStream.available();
+						bufferSize = Math.min(bytesAvailable, maxBufferSize);
+						bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+					}
+					dos.writeBytes(lineEnd);
+					dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+					fileInputStream.close();
+					dos.flush();
+					dos.close();
 				}
-	//catch some error
-				catch(MalformedURLException ex){
-					//Toast.makeText(MyActivity.this, ex.toString(), 1 ).show();
-					ex.getStackTrace();
+				catch (MalformedURLException ex){
+					Log.e("Debug", "error: " + ex.getMessage(), ex);
+				}
+				catch (IOException ioe){
+					Log.e("Debug", "error: " + ioe.getMessage(), ioe);
+				}
+				catch (PackageManager.NameNotFoundException err){
+					Log.e("Debug", "error: " + err.getMessage(), err);
+				}
+				//------------------ read the SERVER RESPONSE
+				String reponse_data = "";
+				try {
+					inStream = new DataInputStream ( conn.getInputStream() );
+					String str;
+					while (( str = inStream.readLine()) != null){
+						Log.e("Debug","Server Response "+str);
+						reponse_data=str;
+					}
+					inStream.close();
+				}
+				catch (IOException ioex){
+					Log.e("Debug", "error: " + ioex.getMessage(), ioex);
+				}
 
-				}
-	// and some more
-				catch(IOException ex){
-	ex.getStackTrace();
-					//Toast.makeText(MyActivity.this, ex.toString(), 1 ).show();
-				}
 
 
 
@@ -612,6 +724,52 @@ public class AppListerActivity extends AppCompatActivity {
 
 
 
+		// Try to get the largest icon possible
+		public Drawable getIconFromPackageName(String packageName, Context context)
+		{
+			PackageManager pm = context.getPackageManager();
+			try
+			{
+				PackageInfo pi = pm.getPackageInfo(packageName, 0);
+				Context otherAppCtx = context.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
+
+				int displayMetrics[] = {DisplayMetrics.DENSITY_XXXHIGH, DisplayMetrics.DENSITY_XXHIGH, DisplayMetrics.DENSITY_XHIGH, DisplayMetrics.DENSITY_HIGH, DisplayMetrics.DENSITY_TV};
+
+				for (int displayMetric : displayMetrics)
+				{
+					try
+					{
+						Drawable d = otherAppCtx.getResources().getDrawableForDensity(pi.applicationInfo.icon, displayMetric, getApplicationContext().getTheme());
+						if (d != null)
+						{
+							return d;
+						}
+					}
+					catch (Resources.NotFoundException e)
+					{
+						Log.d("TAG", "NameNotFound for" + packageName + " @ density: " + displayMetric);
+						continue;
+					}
+				}
+
+			}
+			catch (Exception e)
+			{
+				// Handle Error here
+			}
+
+			ApplicationInfo appInfo = null;
+			try
+			{
+				appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+			}
+			catch (PackageManager.NameNotFoundException e)
+			{
+				return null;
+			}
+
+			return appInfo.loadIcon(pm);
+		}
 
 
 		protected void onProgressUpdate(Integer... progress) {
@@ -630,6 +788,33 @@ public class AppListerActivity extends AppCompatActivity {
 			}
 		}
 	}
+
+
+	public Bitmap drawableToBitmap (Drawable drawable) {
+		if (drawable instanceof BitmapDrawable) {
+			return ((BitmapDrawable) drawable).getBitmap();
+		} else if ((Build.VERSION.SDK_INT >= 26)
+				&& (drawable instanceof AdaptiveIconDrawable)) {
+			AdaptiveIconDrawable icon = ((AdaptiveIconDrawable)drawable);
+			Drawable bg = icon.getBackground();
+			Drawable fg = icon.getForeground();
+			int w = icon.getIntrinsicWidth();
+			int h = icon.getIntrinsicHeight();
+			Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+			Canvas canvas = new Canvas(result);
+			icon.setBounds(0, 0, w, h);
+			bg.draw(canvas);
+			if (fg instanceof Drawable) {
+				fg.draw(canvas);
+			}
+			return result;
+		}
+		float density = getBaseContext().getResources().getDisplayMetrics().density;
+		int defaultWidth = (int)(48* density);
+		int defaultHeight = (int)(48* density);
+		return Bitmap.createBitmap(defaultWidth, defaultHeight, Bitmap.Config.ARGB_8888);
+	}
+
 
 
 }
