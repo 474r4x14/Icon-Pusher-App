@@ -15,6 +15,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -518,7 +519,7 @@ public class AppListerActivity extends AppCompatActivity {
 				int bytesRead, bytesAvailable, bufferSize;
 				byte[] buffer;
 				int maxBufferSize = 1*1024*1024;
-				String upload_file_name = "iCoN";
+				String upload_file_name = "icon";
 
 
 
@@ -528,8 +529,10 @@ public class AppListerActivity extends AppCompatActivity {
 					ApplicationInfo appInfo = appInfos[i];
 					Map<String,String> map = getPackageData(appInfo);
 
+					PackageManager pm = getApplicationContext().getPackageManager();
+					PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
 
-	//if you are using https, make sure to import java.net.HttpsURLConnection
+					//if you are using https, make sure to import java.net.HttpsURLConnection
 					url=new URL("https://iconpusher.com/push");
 
 	//you need to encode ONLY the values of the parameters
@@ -550,23 +553,8 @@ public class AppListerActivity extends AppCompatActivity {
 						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
 					}
 
-
-
-
-
-
-
-//					Drawable icon = appInfo.loadIcon( getBaseContext().getPackageManager());
 					Drawable icon = getIconFromPackageName(appInfo.packageName, getApplicationContext());
-
-//					Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
 					Bitmap bitmap = drawableToBitmap(icon);
-
-
-
-
-
-
 
 
 //create a file to write bitmap data
@@ -608,14 +596,11 @@ public class AppListerActivity extends AppCompatActivity {
 					dos.writeBytes(twoHyphens + boundary + lineEnd);
 
 
-					dos.writeBytes("Content-Disposition: form-data; name=\"reference\""+ lineEnd);
+					dos.writeBytes("Content-Disposition: form-data; name=\"version\""+ lineEnd);
 					dos.writeBytes(lineEnd);
-					dos.writeBytes("my_refrence_text");
+					dos.writeBytes(pi.versionName);
 					dos.writeBytes(lineEnd);
 					dos.writeBytes(twoHyphens + boundary + lineEnd);
-
-
-
 
 					for (Map.Entry<String, String> entry : map.entrySet())
 					{
@@ -664,6 +649,9 @@ public class AppListerActivity extends AppCompatActivity {
 				}
 				catch (IOException ioe){
 					Log.e("Debug", "error: " + ioe.getMessage(), ioe);
+				}
+				catch (PackageManager.NameNotFoundException err){
+					Log.e("Debug", "error: " + err.getMessage(), err);
 				}
 				//------------------ read the SERVER RESPONSE
 				String reponse_data = "";
@@ -740,37 +728,34 @@ public class AppListerActivity extends AppCompatActivity {
 		public Drawable getIconFromPackageName(String packageName, Context context)
 		{
 			PackageManager pm = context.getPackageManager();
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
+			try
 			{
-				try
+				PackageInfo pi = pm.getPackageInfo(packageName, 0);
+				Context otherAppCtx = context.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
+
+				int displayMetrics[] = {DisplayMetrics.DENSITY_XXXHIGH, DisplayMetrics.DENSITY_XXHIGH, DisplayMetrics.DENSITY_XHIGH, DisplayMetrics.DENSITY_HIGH, DisplayMetrics.DENSITY_TV};
+
+				for (int displayMetric : displayMetrics)
 				{
-					PackageInfo pi = pm.getPackageInfo(packageName, 0);
-					Context otherAppCtx = context.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
-
-					int displayMetrics[] = {DisplayMetrics.DENSITY_XXXHIGH, DisplayMetrics.DENSITY_XXHIGH, DisplayMetrics.DENSITY_XHIGH, DisplayMetrics.DENSITY_HIGH, DisplayMetrics.DENSITY_TV};
-
-					for (int displayMetric : displayMetrics)
+					try
 					{
-						try
+						Drawable d = otherAppCtx.getResources().getDrawableForDensity(pi.applicationInfo.icon, displayMetric, getApplicationContext().getTheme());
+						if (d != null)
 						{
-							Drawable d = otherAppCtx.getResources().getDrawableForDensity(pi.applicationInfo.icon, displayMetric);
-							if (d != null)
-							{
-								return d;
-							}
-						}
-						catch (Resources.NotFoundException e)
-						{
-                      Log.d("TAG", "NameNotFound for" + packageName + " @ density: " + displayMetric);
-							continue;
+							return d;
 						}
 					}
+					catch (Resources.NotFoundException e)
+					{
+						Log.d("TAG", "NameNotFound for" + packageName + " @ density: " + displayMetric);
+						continue;
+					}
+				}
 
-				}
-				catch (Exception e)
-				{
-					// Handle Error here
-				}
+			}
+			catch (Exception e)
+			{
+				// Handle Error here
 			}
 
 			ApplicationInfo appInfo = null;
@@ -805,27 +790,31 @@ public class AppListerActivity extends AppCompatActivity {
 	}
 
 
-	public static Bitmap drawableToBitmap (Drawable drawable) {
-		Bitmap bitmap = null;
-
+	public Bitmap drawableToBitmap (Drawable drawable) {
 		if (drawable instanceof BitmapDrawable) {
-			BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-			if(bitmapDrawable.getBitmap() != null) {
-				return bitmapDrawable.getBitmap();
+			return ((BitmapDrawable) drawable).getBitmap();
+		} else if ((Build.VERSION.SDK_INT >= 26)
+				&& (drawable instanceof AdaptiveIconDrawable)) {
+			AdaptiveIconDrawable icon = ((AdaptiveIconDrawable)drawable);
+			Drawable bg = icon.getBackground();
+			Drawable fg = icon.getForeground();
+			int w = icon.getIntrinsicWidth();
+			int h = icon.getIntrinsicHeight();
+			Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+			Canvas canvas = new Canvas(result);
+			icon.setBounds(0, 0, w, h);
+			bg.draw(canvas);
+			if (fg instanceof Drawable) {
+				fg.draw(canvas);
 			}
+			return result;
 		}
-
-		if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-			bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
-		} else {
-			bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-		}
-
-		Canvas canvas = new Canvas(bitmap);
-		drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-		drawable.draw(canvas);
-		return bitmap;
+		float density = getBaseContext().getResources().getDisplayMetrics().density;
+		int defaultWidth = (int)(48* density);
+		int defaultHeight = (int)(48* density);
+		return Bitmap.createBitmap(defaultWidth, defaultHeight, Bitmap.Config.ARGB_8888);
 	}
+
 
 
 }
