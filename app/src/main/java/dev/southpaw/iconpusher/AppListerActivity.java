@@ -531,9 +531,6 @@ public class AppListerActivity extends AppCompatActivity {
 
 					PackageManager pm = getApplicationContext().getPackageManager();
 					PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
-					if (pi == null) {
-						continue;
-					}
 
 					//if you are using https, make sure to import java.net.HttpsURLConnection
 					url=new URL("https://iconpusher.com/push");
@@ -654,6 +651,9 @@ public class AppListerActivity extends AppCompatActivity {
 					Log.e("Debug", "error: " + ioe.getMessage(), ioe);
 				}
 				catch (PackageManager.NameNotFoundException err){
+					Log.e("Debug", "error: " + err.getMessage(), err);
+				}
+				catch (NullPointerException err){
 					Log.e("Debug", "error: " + err.getMessage(), err);
 				}
 				//------------------ read the SERVER RESPONSE
