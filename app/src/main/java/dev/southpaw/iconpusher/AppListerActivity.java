@@ -531,6 +531,9 @@ public class AppListerActivity extends AppCompatActivity {
 
 					PackageManager pm = getApplicationContext().getPackageManager();
 					PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
+					if (pi == null) {
+						continue;
+					}
 
 					//if you are using https, make sure to import java.net.HttpsURLConnection
 					url=new URL("https://iconpusher.com/push");
