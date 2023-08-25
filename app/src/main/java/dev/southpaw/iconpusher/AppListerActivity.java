@@ -643,18 +643,9 @@ public class AppListerActivity extends AppCompatActivity {
 					fileInputStream.close();
 					dos.flush();
 					dos.close();
-				}
-				catch (MalformedURLException ex){
+				} catch (IOException | PackageManager.NameNotFoundException |
+						 NullPointerException ex){
 					Log.e("Debug", "error: " + ex.getMessage(), ex);
-				}
-				catch (IOException ioe){
-					Log.e("Debug", "error: " + ioe.getMessage(), ioe);
-				}
-				catch (PackageManager.NameNotFoundException err){
-					Log.e("Debug", "error: " + err.getMessage(), err);
-				}
-				catch (NullPointerException err){
-					Log.e("Debug", "error: " + err.getMessage(), err);
 				}
 				//------------------ read the SERVER RESPONSE
 				String reponse_data = "";
@@ -806,7 +797,9 @@ public class AppListerActivity extends AppCompatActivity {
 			Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 			Canvas canvas = new Canvas(result);
 			icon.setBounds(0, 0, w, h);
-			bg.draw(canvas);
+			if (bg instanceof Drawable) {
+				bg.draw(canvas);
+			}
 			if (fg instanceof Drawable) {
 				fg.draw(canvas);
 			}

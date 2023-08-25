@@ -13,12 +13,10 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import dev.southpaw.iconpusher.R;
-
 public class ApplicationAdapter extends ArrayAdapter<Request> {
 	private List<Request> appsList = null;
-	private Context context;
-	private PackageManager packageManager;
+	private final Context context;
+	private final PackageManager packageManager;
 
 	public ApplicationAdapter(Context context, int textViewResourceId,
 			List<Request> appsList) {
