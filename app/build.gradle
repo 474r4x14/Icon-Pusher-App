@@ -1,13 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion '26.0.2'
+    compileSdkVersion 32
 
     defaultConfig {
         applicationId "dev.southpaw.iconpusher"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 32
     }
 
     buildTypes {
@@ -16,8 +15,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    namespace 'dev.southpaw.iconpusher'
 }
 
 dependencies {
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.9.0'
 }
