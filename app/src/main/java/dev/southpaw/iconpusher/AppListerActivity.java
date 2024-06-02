@@ -40,6 +40,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.google.gson.Gson;
+
+import org.apache.commons.io.FileUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -53,6 +57,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -553,6 +558,8 @@ public class AppListerActivity extends AppCompatActivity {
 						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
 					}
 
+					map.put("version", pi.versionName);
+
 					Drawable icon = getIconFromPackageName(appInfo.packageName, getApplicationContext());
 					Bitmap bitmap = drawableToBitmap(icon);
 
@@ -591,55 +598,19 @@ public class AppListerActivity extends AppCompatActivity {
 					// Use a post method.
 					conn.setRequestMethod("POST");
 					conn.setRequestProperty("Connection", "Keep-Alive");
-					conn.setRequestProperty("Content-Type", "multipart/form-data;boundary="+boundary);
+					conn.setRequestProperty("Content-Type", "application/json");
+
+					// convert the image to base64
+					byte[] fileContent = FileUtils.readFileToByteArray(file);
+					String encodedString = Base64.getEncoder().encodeToString(fileContent);
+
+					map.put("icon",encodedString);
+
 					dos = new DataOutputStream( conn.getOutputStream() );
-					dos.writeBytes(twoHyphens + boundary + lineEnd);
+					Gson gson = new Gson();
+					dos.writeBytes(gson.toJson(map));
 
 
-					dos.writeBytes("Content-Disposition: form-data; name=\"version\""+ lineEnd);
-					dos.writeBytes(lineEnd);
-					dos.writeBytes(pi.versionName);
-					dos.writeBytes(lineEnd);
-					dos.writeBytes(twoHyphens + boundary + lineEnd);
-
-					for (Map.Entry<String, String> entry : map.entrySet())
-					{
-						//System.out.println(entry.getKey() + "/" + entry.getValue());
-
-//						if (param != "") {
-//							param += "&";
-//						}
-
-//						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
-
-						dos.writeBytes("Content-Disposition: form-data; name=\""+entry.getKey()+"\""+ lineEnd);
-						dos.writeBytes(lineEnd);
-						dos.writeBytes(entry.getValue());
-						dos.writeBytes(lineEnd);
-						dos.writeBytes(twoHyphens + boundary + lineEnd);
-
-
-
-					}
-
-
-
-
-
-					dos.writeBytes("Content-Disposition: form-data; name=\"uploadedfile\";filename=\"" + upload_file_name + "\"" + lineEnd); // uploaded_file_name is the Name of the File to be uploaded
-					dos.writeBytes(lineEnd);
-					bytesAvailable = fileInputStream.available();
-					bufferSize = Math.min(bytesAvailable, maxBufferSize);
-					buffer = new byte[bufferSize];
-					bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-					while (bytesRead > 0){
-						dos.write(buffer, 0, bufferSize);
-						bytesAvailable = fileInputStream.available();
-						bufferSize = Math.min(bytesAvailable, maxBufferSize);
-						bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-					}
-					dos.writeBytes(lineEnd);
-					dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 					fileInputStream.close();
 					dos.flush();
 					dos.close();
