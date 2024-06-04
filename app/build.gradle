@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "dev.southpaw.iconpusher"
-        minSdkVersion 21
-        targetSdkVersion 32
+        minSdkVersion 26
+        targetSdkVersion 34
     }
 
     buildTypes {
@@ -16,8 +17,27 @@ android {
         }
     }
     namespace 'dev.southpaw.iconpusher'
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+
+
+    kotlin {
+        jvmToolchain(17)
+    }
+
 }
 
 dependencies {
     implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.core:core-ktx:+'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'commons-io:commons-io:2.16.1'
 }
