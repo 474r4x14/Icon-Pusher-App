@@ -1,19 +1,15 @@
 package dev.southpaw.iconpusher;
 
-import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.BitmapDrawable;
@@ -51,9 +47,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -63,7 +57,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 
 public class AppListerActivity extends AppCompatActivity {
@@ -146,17 +139,9 @@ public class AppListerActivity extends AppCompatActivity {
 		builder.setTitle(getString(R.string.info_title));
 		builder.setMessage(getString(R.string.info_data));
 
-		builder.setNeutralButton("Privacy Policy",new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				displayPrivacyDialog();
-			}
-		});
+		builder.setNeutralButton("Privacy Policy", (dialog, id) -> displayPrivacyDialog());
 
-		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.cancel();
-			}
-		});
+		builder.setNegativeButton("Close", (dialog, id) -> dialog.cancel());
 		builder.show();
 	}
 
@@ -169,11 +154,7 @@ public class AppListerActivity extends AppCompatActivity {
 				"<b>What happens to the data</b><br/>"+getString(R.string.privacy_data_3)+"<br/><br/>" +
 				getString(R.string.privacy_data_4)));
 
-		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.cancel();
-			}
-		});
+		builder.setNegativeButton("Close", (dialog, id) -> dialog.cancel());
 		builder.show();
 	}
 
@@ -201,7 +182,7 @@ public class AppListerActivity extends AppCompatActivity {
 			}
 		}
 
-		if (pushList.size() == 0) {
+		if (pushList.isEmpty()) {
 			Toast.makeText(this, "Please select at least one app", Toast.LENGTH_SHORT ).show();
 
 			return;
@@ -233,25 +214,21 @@ public class AppListerActivity extends AppCompatActivity {
 					public void onClick(DialogInterface dialog, int which)
 					{
 						isRunning = false;
-						// Use either finish() or return() to either close the activity or just the dialog
 						return;
 					}
 				});
 
 
 
-				final Thread mThread = new Thread() {
-					@Override
-					public void run() {
-						for (int i = 0; i < pushList.size(); i++) {
-							if (!isRunning) {
-								break;
-							}
-							ApplicationInfo info = pushList.get(i).info;
-							new PushData().execute(info);
-						}
-					}
-				};
+				final Thread mThread = new Thread(() -> {
+                    for (int i = 0; i < pushList.size(); i++) {
+                        if (!isRunning) {
+                            break;
+                        }
+                        ApplicationInfo info = pushList.get(i).info;
+                        new PushData().execute(info);
+                    }
+                });
 
 				progress.show();
 				mThread.start();
@@ -267,18 +244,14 @@ public class AppListerActivity extends AppCompatActivity {
 				dialog.cancel();
 			}
 		});
-		builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.cancel();
-			}
-		});
+		builder.setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
 		 
 		builder.show();
 	}
 
 
 	private Map<String,String> getPackageData(ApplicationInfo appInfo) {
-		Map theMap = new HashMap<>();
+		Map<String, String> theMap = new HashMap<>();
 		final PackageManager pm = getApplicationContext().getPackageManager();
 		Intent intent=pm.getLaunchIntentForPackage(appInfo.packageName);
 
@@ -322,29 +295,28 @@ public class AppListerActivity extends AppCompatActivity {
 		}
 
 
-		Collections.sort(applist, new Comparator<ApplicationInfo>()
-		{
-			@Override
-			public int compare(ApplicationInfo lhs, ApplicationInfo rhs) {
+		applist.sort(new Comparator<ApplicationInfo>() {
+            @Override
+            public int compare(ApplicationInfo lhs, ApplicationInfo rhs) {
 
-				ApplicationInfo ai1;
-				ApplicationInfo ai2;
-				try {
-					ai1 = packageManager.getApplicationInfo(lhs.packageName, 0);
-				} catch (final PackageManager.NameNotFoundException e) {
-					ai1 = null;
-				}
-				try {
-					ai2 = packageManager.getApplicationInfo(rhs.packageName, 0);
-				} catch (final PackageManager.NameNotFoundException e) {
-					ai2 = null;
-				}
-				final String lhsName = (String) (ai1 != null ? packageManager.getApplicationLabel(ai1) : "(unknown)");
-				final String rhsName = (String) (ai2 != null ? packageManager.getApplicationLabel(ai2) : "(unknown)");
+                ApplicationInfo ai1;
+                ApplicationInfo ai2;
+                try {
+                    ai1 = packageManager.getApplicationInfo(lhs.packageName, 0);
+                } catch (final PackageManager.NameNotFoundException e) {
+                    ai1 = null;
+                }
+                try {
+                    ai2 = packageManager.getApplicationInfo(rhs.packageName, 0);
+                } catch (final PackageManager.NameNotFoundException e) {
+                    ai2 = null;
+                }
+                final String lhsName = (String) (ai1 != null ? packageManager.getApplicationLabel(ai1) : "(unknown)");
+                final String rhsName = (String) (ai2 != null ? packageManager.getApplicationLabel(ai2) : "(unknown)");
 
-				return lhsName.compareToIgnoreCase(rhsName);
-			}
-		});
+                return lhsName.compareToIgnoreCase(rhsName);
+            }
+        });
 
 
 		return applist;
@@ -382,20 +354,19 @@ public class AppListerActivity extends AppCompatActivity {
 
 		@Override
 		protected void onPostExecute(Void result) {
-			mainListView = (ListView) findViewById(R.id.mainListView);
+			mainListView = findViewById(R.id.mainListView);
 			mainListView.setAdapter(listadaptor);
 
 			mainListView.setClickable(true);
 
 
 
-			mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-				public void onItemClick (final AdapterView<?> parent, View view, int position, long id) {
-					Log.w("GOT pos",""+position);
-					Request request = applist.get(position);
-					request.selected = !request.selected;
-					listadaptor.notifyDataSetChanged();
-				} });
+			mainListView.setOnItemClickListener((parent, view, position, id) -> {
+                Log.w("GOT pos",""+position);
+                Request request = applist.get(position);
+                request.selected = !request.selected;
+                listadaptor.notifyDataSetChanged();
+            });
 
 
 
@@ -417,119 +388,112 @@ public class AppListerActivity extends AppCompatActivity {
 
 	private class PushData extends AsyncTask<ApplicationInfo, Void, Boolean> {
 		@Override
-		//protected Void doInBackground(Map... mapVals) {
 		protected Boolean doInBackground(ApplicationInfo... appInfos) {
 
 
 			int count = appInfos.length;
-			for (int i = 0; i < count; i++) {
+            for (ApplicationInfo info : appInfos) {
 
 
-				Log.w("myApp", "about to do http");
+                Log.w("myApp", "about to do http");
 
 
-				URL url;
+                URL url;
 
 
-				HttpURLConnection conn = null;
-				DataOutputStream dos = null;
-				DataInputStream inStream = null;
+                HttpURLConnection conn = null;
+                DataOutputStream dos = null;
+                DataInputStream inStream = null;
 
-				try{
-					ApplicationInfo appInfo = appInfos[i];
-					Map<String,String> map = getPackageData(appInfo);
+                try {
+                    ApplicationInfo appInfo = info;
+                    Map<String, String> map = getPackageData(appInfo);
 
-					PackageManager pm = getApplicationContext().getPackageManager();
-					PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
+                    PackageManager pm = getApplicationContext().getPackageManager();
+                    PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
 
-					//if you are using https, make sure to import java.net.HttpsURLConnection
-					url=new URL("https://api.iconpusher.com/package/"+appInfo.packageName);
+                    //if you are using https, make sure to import java.net.HttpsURLConnection
+                    url = new URL("https://api.iconpusher.com/package/" + appInfo.packageName);
 
-	//you need to encode ONLY the values of the parameters
+                    //you need to encode ONLY the values of the parameters
 
-					String param = "";
-					for (Map.Entry<String, String> entry : map.entrySet())
-					{
-						if (param != "") {
-							param += "&";
-						}
+                    String param = "";
+                    for (Map.Entry<String, String> entry : map.entrySet()) {
+                        if (param != "") {
+                            param += "&";
+                        }
 
-						param += entry.getKey()+"="+URLEncoder.encode(entry.getValue(),"UTF-8");
-					}
+                        param += entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), "UTF-8");
+                    }
 
-					map.put("version", pi.versionName);
+                    map.put("version", pi.versionName);
 
-					Drawable icon = getIconFromPackageName(appInfo.packageName, getApplicationContext());
-					Bitmap bitmap = drawableToBitmap(icon);
+                    Drawable icon = getIconFromPackageName(appInfo.packageName, getApplicationContext());
+                    Bitmap bitmap = drawableToBitmap(icon);
 
 
 //create a file to write bitmap data
-					File file = new File( getApplicationContext().getCacheDir(), "icon");
-					file.createNewFile();
+                    File file = new File(getApplicationContext().getCacheDir(), "icon");
+                    file.createNewFile();
 
 //Convert bitmap to byte array
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
-					byte[] bitmapdata = bos.toByteArray();
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+                    byte[] bitmapdata = bos.toByteArray();
 
 //write the bytes in file
-					FileOutputStream fos = new FileOutputStream(file);
-					fos.write(bitmapdata);
-					fos.flush();
-					fos.close();
+                    FileOutputStream fos = new FileOutputStream(file);
+                    fos.write(bitmapdata);
+                    fos.flush();
+                    fos.close();
 
 
+                    //------------------ CLIENT REQUEST
+                    FileInputStream fileInputStream = new FileInputStream(file);
+                    // open a URL connection to the Servlet
+                    // Open a HTTP connection to the URL
+                    conn = (HttpURLConnection) url.openConnection();
+                    // Allow Inputs
+                    conn.setDoInput(true);
+                    // Allow Outputs
+                    conn.setDoOutput(true);
+                    // Don't use a cached copy.
+                    conn.setUseCaches(false);
+                    // Use a post method.
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Connection", "Keep-Alive");
+                    conn.setRequestProperty("Content-Type", "application/json");
+
+                    // convert the image to base64
+                    byte[] fileContent = FileUtils.readFileToByteArray(file);
+                    String encodedString = Base64.getEncoder().encodeToString(fileContent);
+
+                    map.put("icon", encodedString);
+
+                    dos = new DataOutputStream(conn.getOutputStream());
+                    Gson gson = new Gson();
+                    dos.writeBytes(gson.toJson(map));
 
 
-					//------------------ CLIENT REQUEST
-					FileInputStream fileInputStream = new FileInputStream(file);
-					// open a URL connection to the Servlet
-					// Open a HTTP connection to the URL
-					conn = (HttpURLConnection) url.openConnection();
-					// Allow Inputs
-					conn.setDoInput(true);
-					// Allow Outputs
-					conn.setDoOutput(true);
-					// Don't use a cached copy.
-					conn.setUseCaches(false);
-					// Use a post method.
-					conn.setRequestMethod("POST");
-					conn.setRequestProperty("Connection", "Keep-Alive");
-					conn.setRequestProperty("Content-Type", "application/json");
-
-					// convert the image to base64
-					byte[] fileContent = FileUtils.readFileToByteArray(file);
-					String encodedString = Base64.getEncoder().encodeToString(fileContent);
-
-					map.put("icon",encodedString);
-
-					dos = new DataOutputStream( conn.getOutputStream() );
-					Gson gson = new Gson();
-					dos.writeBytes(gson.toJson(map));
-
-
-					fileInputStream.close();
-					dos.flush();
-					dos.close();
-				} catch (IOException | PackageManager.NameNotFoundException |
-						 NullPointerException ex){
-					Log.e("Debug", "error: " + ex.getMessage(), ex);
-				}
-				//------------------ read the SERVER RESPONSE
-				String reponse_data = "";
-				try {
-					inStream = new DataInputStream ( conn.getInputStream() );
-					String str;
-					while (( str = inStream.readLine()) != null){
-						Log.e("Debug","Server Response "+str);
-						reponse_data=str;
-					}
-					inStream.close();
-				}
-				catch (IOException ioex){
-					Log.e("Debug", "error: " + ioex.getMessage(), ioex);
-				}
-			}
+                    fileInputStream.close();
+                    dos.flush();
+                    dos.close();
+                } catch (IOException | PackageManager.NameNotFoundException |
+                         NullPointerException ex) {
+                    Log.e("Debug", "error: " + ex.getMessage(), ex);
+                }
+                //------------------ read the SERVER RESPONSE
+                try {
+                    inStream = new DataInputStream(conn.getInputStream());
+                    String str;
+                    while ((str = inStream.readLine()) != null) {
+                        Log.e("Debug", "Server Response " + str);
+                    }
+                    inStream.close();
+                } catch (IOException ioex) {
+                    Log.e("Debug", "error: " + ioex.getMessage(), ioex);
+                }
+            }
 			return null;
 
 		}
@@ -582,9 +546,7 @@ public class AppListerActivity extends AppCompatActivity {
 		}
 
 
-		protected void onProgressUpdate(Integer... progress) {
-			//setProgressPercent(progress[0]);
-		}
+
 
 		//@Override
 		protected void onPostExecute(Boolean result) {
@@ -602,8 +564,7 @@ public class AppListerActivity extends AppCompatActivity {
 	public Bitmap drawableToBitmap (Drawable drawable) {
 		if (drawable instanceof BitmapDrawable) {
 			return ((BitmapDrawable) drawable).getBitmap();
-		} else if ((Build.VERSION.SDK_INT >= 26)
-				&& (drawable instanceof AdaptiveIconDrawable)) {
+		} else if (drawable instanceof AdaptiveIconDrawable) {
 			AdaptiveIconDrawable icon = ((AdaptiveIconDrawable)drawable);
 			Drawable bg = icon.getBackground();
 			Drawable fg = icon.getForeground();
@@ -612,10 +573,10 @@ public class AppListerActivity extends AppCompatActivity {
 			Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 			Canvas canvas = new Canvas(result);
 			icon.setBounds(0, 0, w, h);
-			if (bg instanceof Drawable) {
+			if (bg != null) {
 				bg.draw(canvas);
 			}
-			if (fg instanceof Drawable) {
+			if (fg != null) {
 				fg.draw(canvas);
 			}
 			return result;
