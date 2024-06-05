@@ -93,18 +93,8 @@ public class AppListerActivity extends AppCompatActivity {
 		TextView androidIdTxt = (TextView) findViewById(R.id.android_id_txt);
 		androidIdTxt.setText("Android ID: "+android_id+"\nClick here to view on site");
 
-
-//		mainListView = (ListView) findViewById(R.id.mainListView);
-//		mainListView.setClickable(true);
-
-
-
-
-
-
 		new LoadApplications().execute();
 	}
-
 
 
 	public void idClick(View view)
@@ -115,14 +105,6 @@ public class AppListerActivity extends AppCompatActivity {
 		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://iconpusher.com/device/"+android_id));
 		startActivity(browserIntent);
 	}
-/*
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.menu, menu);
-
-		return true;
-	}
-*/
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -233,15 +215,8 @@ public class AppListerActivity extends AppCompatActivity {
 		progress=new ProgressDialog(this);
 		builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
-				//Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://javatechig.com"));
-				//startActivity(browserIntent);
 
-
-				//PushData pushData = new PushData();
-				//pushData.postData();
 				Log.w("myApp", "about to pushdata");
-
-				//Map<String, String> map = new HashMap<>();
 
 				progress.setCancelable(false);
 
@@ -257,7 +232,6 @@ public class AppListerActivity extends AppCompatActivity {
 				{
 					public void onClick(DialogInterface dialog, int which)
 					{
-//						pushList.clear();
 						isRunning = false;
 						// Use either finish() or return() to either close the activity or just the dialog
 						return;
@@ -274,24 +248,14 @@ public class AppListerActivity extends AppCompatActivity {
 								break;
 							}
 							ApplicationInfo info = pushList.get(i).info;
-							//System.out.println(applist.get(i));
-//							Map appData = getPackageData(info);
 							new PushData().execute(info);
-							//progress.setProgress(i);
 						}
-						//progress.dismiss();
 					}
 				};
 
 				progress.show();
 				mThread.start();
 
-				//map.put("name", "demo");
-				//map.put("fname", "fdemo");
-
-
-
-				//new PushData().execute(map);
 				Log.w("myApp", "finished pushdata");
 
 
@@ -387,10 +351,6 @@ public class AppListerActivity extends AppCompatActivity {
 	}
 
 
-	public void itemClicked(View view)
-	{
-		Log.w("clkd","??");
-	}
 
 
 	private class LoadApplications extends AsyncTask<Void, Void, Void> {
@@ -422,23 +382,19 @@ public class AppListerActivity extends AppCompatActivity {
 
 		@Override
 		protected void onPostExecute(Void result) {
-//			setListAdapter(listadaptor);
 			mainListView = (ListView) findViewById(R.id.mainListView);
 			mainListView.setAdapter(listadaptor);
 
 			mainListView.setClickable(true);
-//			mainListView.setItemsCanFocus(false);
 
 
 
 			mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 				public void onItemClick (final AdapterView<?> parent, View view, int position, long id) {
-//					final String item = (String) parent.getItemAtPosition(position);
 					Log.w("GOT pos",""+position);
 					Request request = applist.get(position);
 					request.selected = !request.selected;
 					listadaptor.notifyDataSetChanged();
-//					Log.w("GOT",request.info.name);
 				} });
 
 
@@ -463,72 +419,21 @@ public class AppListerActivity extends AppCompatActivity {
 		@Override
 		//protected Void doInBackground(Map... mapVals) {
 		protected Boolean doInBackground(ApplicationInfo... appInfos) {
-			/*
-			//int count = urls.length;
-			long totalSize = 0;
-			for (int i = 0; i < count; i++) {
-				totalSize += Downloader.downloadFile(urls[i]);
-				publishProgress((int) ((i / (float) count) * 100));
-				// Escape early if cancel() is called
-				if (isCancelled()) break;
-			}
-			return totalSize;
-			*/
-
 
 
 			int count = appInfos.length;
-			//long totalSize = 0;
 			for (int i = 0; i < count; i++) {
-				//totalSize += Downloader.downloadFile(mapVals[i]);
-				//publishProgress((int) ((i / (float) count) * 100));
-				// Escape early if cancel() is called
-				//if (isCancelled()) break;
-
-
-
-
-
-
-
-
 
 
 				Log.w("myApp", "about to do http");
 
 
-
-
-
-
-
-
-
-
-	//do this wherever you are wanting to POST
 				URL url;
-//				HttpURLConnection conn;
-
-
-
-
 
 
 				HttpURLConnection conn = null;
 				DataOutputStream dos = null;
 				DataInputStream inStream = null;
-//				String existingFileName = file_path;
-				String lineEnd = "\r\n";
-				String twoHyphens = "--";
-				String boundary =  "*****";
-				int bytesRead, bytesAvailable, bufferSize;
-				byte[] buffer;
-				int maxBufferSize = 1*1024*1024;
-				String upload_file_name = "icon";
-
-
-
-
 
 				try{
 					ApplicationInfo appInfo = appInfos[i];
@@ -541,16 +446,10 @@ public class AppListerActivity extends AppCompatActivity {
 					url=new URL("https://api.iconpusher.com/package/"+appInfo.packageName);
 
 	//you need to encode ONLY the values of the parameters
-					/*
-					String param="param1=" + URLEncoder.encode("value1","UTF-8")+
-					"&param2="+URLEncoder.encode("value2","UTF-8")+
-					"&param3="+URLEncoder.encode("value3","UTF-8");
-	*/
+
 					String param = "";
 					for (Map.Entry<String, String> entry : map.entrySet())
 					{
-						//System.out.println(entry.getKey() + "/" + entry.getValue());
-
 						if (param != "") {
 							param += "&";
 						}
@@ -569,7 +468,6 @@ public class AppListerActivity extends AppCompatActivity {
 					file.createNewFile();
 
 //Convert bitmap to byte array
-//					Bitmap bitmap = your bitmap;
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
 					bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
 					byte[] bitmapdata = bos.toByteArray();
@@ -586,7 +484,6 @@ public class AppListerActivity extends AppCompatActivity {
 					//------------------ CLIENT REQUEST
 					FileInputStream fileInputStream = new FileInputStream(file);
 					// open a URL connection to the Servlet
-//					URL url = new URL(urlString);
 					// Open a HTTP connection to the URL
 					conn = (HttpURLConnection) url.openConnection();
 					// Allow Inputs
@@ -632,62 +529,10 @@ public class AppListerActivity extends AppCompatActivity {
 				catch (IOException ioex){
 					Log.e("Debug", "error: " + ioex.getMessage(), ioex);
 				}
-
-
-
-
-
 			}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 			return null;
 
 		}
-
-		/*
-		private String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException
-		{
-			StringBuilder result = new StringBuilder();
-			boolean first = true;
-
-			for (NameValuePair pair : params)
-			{
-				if (first)
-					first = false;
-				else
-					result.append("&");
-
-				result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
-				result.append("=");
-				result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
-			}
-
-			return result.toString();
-		}
-		*/
-
-
 
 		// Try to get the largest icon possible
 		public Drawable getIconFromPackageName(String packageName, Context context)
@@ -743,7 +588,6 @@ public class AppListerActivity extends AppCompatActivity {
 
 		//@Override
 		protected void onPostExecute(Boolean result) {
-			//showDialog("Downloaded " + result + " bytes");
 			if (progress != null) {
 				progressDone++;
 				progress.setProgress(progressDone);
@@ -781,9 +625,4 @@ public class AppListerActivity extends AppCompatActivity {
 		int defaultHeight = (int)(48* density);
 		return Bitmap.createBitmap(defaultWidth, defaultHeight, Bitmap.Config.ARGB_8888);
 	}
-
-
-
 }
-
-
