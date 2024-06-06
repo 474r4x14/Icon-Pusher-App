@@ -302,6 +302,7 @@ public class AppListerActivity extends AppCompatActivity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
+			//List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA)));
 
 
 			applist = new ArrayList<>();
@@ -363,98 +364,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 
             for (ApplicationInfo info : appInfos) {
-
-
-                Log.w("myApp", "about to do http");
-
-
-                URL url;
-
-
-                HttpURLConnection conn = null;
-                DataOutputStream dos = null;
-                DataInputStream inStream = null;
-
-                try {
-                    ApplicationInfo appInfo = info;
-                    Map<String, String> map = Misc.INSTANCE.getPackageData(appInfo, getApplicationContext(), getContentResolver());
-
-                    PackageManager pm = getApplicationContext().getPackageManager();
-                    PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
-
-                    //if you are using https, make sure to import java.net.HttpsURLConnection
-                    url = new URL("https://api.iconpusher.com/package/" + appInfo.packageName);
-
-                    //you need to encode ONLY the values of the parameters
-
-
-                    map.put("version", pi.versionName);
-
-                    Drawable icon = Misc.INSTANCE.getIconFromPackageName(appInfo.packageName, getApplicationContext());
-                    Bitmap bitmap = Misc.INSTANCE.drawableToBitmap(getApplicationContext(), icon);
-
-
-//create a file to write bitmap data
-                    File file = new File(getApplicationContext().getCacheDir(), "icon");
-                    file.createNewFile();
-
-//Convert bitmap to byte array
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
-                    byte[] bitmapdata = bos.toByteArray();
-
-//write the bytes in file
-                    FileOutputStream fos = new FileOutputStream(file);
-                    fos.write(bitmapdata);
-                    fos.flush();
-                    fos.close();
-
-
-                    //------------------ CLIENT REQUEST
-//                    FileInputStream fileInputStream = new FileInputStream(file);
-                    // open a URL connection to the Servlet
-                    // Open a HTTP connection to the URL
-                    conn = (HttpURLConnection) url.openConnection();
-                    // Allow Inputs
-                    conn.setDoInput(true);
-                    // Allow Outputs
-                    conn.setDoOutput(true);
-                    // Don't use a cached copy.
-                    conn.setUseCaches(false);
-                    // Use a post method.
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Connection", "Keep-Alive");
-                    conn.setRequestProperty("Content-Type", "application/json");
-
-                    // convert the image to base64
-                    byte[] fileContent = FileUtils.readFileToByteArray(file);
-                    String encodedString = Base64.getEncoder().encodeToString(fileContent);
-
-                    map.put("icon", encodedString);
-
-                    dos = new DataOutputStream(conn.getOutputStream());
-                    Gson gson = new Gson();
-                    dos.writeBytes(gson.toJson(map));
-
-
-//                    fileInputStream.close();
-                    dos.flush();
-                    dos.close();
-                } catch (IOException | PackageManager.NameNotFoundException |
-                         NullPointerException ex) {
-                    Log.e("Debug", "error: " + ex.getMessage(), ex);
-                }
-                //------------------ read the SERVER RESPONSE
-                try {
-                    inStream = new DataInputStream(conn.getInputStream());
-                    String str;
-                    while ((str = inStream.readLine()) != null) {
-                        Log.e("Debug", "Server Response " + str);
-                    }
-                    inStream.close();
-                } catch (IOException ioex) {
-                    Log.e("Debug", "error: " + ioex.getMessage(), ioex);
-                }
+				Misc.INSTANCE.postData(info, getApplicationContext(), getContentResolver());
             }
 			return null;
 
