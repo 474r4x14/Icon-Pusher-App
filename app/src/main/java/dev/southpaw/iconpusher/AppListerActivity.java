@@ -250,35 +250,6 @@ public class AppListerActivity extends AppCompatActivity {
 	}
 
 
-	private Map<String,String> getPackageData(ApplicationInfo appInfo) {
-		Map<String, String> theMap = new HashMap<>();
-		final PackageManager pm = getApplicationContext().getPackageManager();
-		Intent intent=pm.getLaunchIntentForPackage(appInfo.packageName);
-
-		ComponentName tmp = intent.getComponent();
-
-		ApplicationInfo ai;
-		try {
-			ai = pm.getApplicationInfo( appInfo.packageName, 0);
-		} catch (final PackageManager.NameNotFoundException e) {
-			ai = null;
-		}
-		final String applicationName = (String) (ai != null ? pm.getApplicationLabel(ai) : "(unknown)");
-
-		theMap.put("appName", applicationName);
-		theMap.put("componentInfo", tmp.getClassName());
-
-		theMap.put("packageName", appInfo.packageName);
-
-		String android_id = Secure.getString(this.getContentResolver(),
-				Secure.ANDROID_ID);
-
-		theMap.put("androidId", android_id);
-		theMap.put("iconPack", getApplicationContext().getPackageName());
-		return theMap;
-	}
-
-
 
 
 
@@ -334,7 +305,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 
 			applist = new ArrayList<>();
-			for (Integer i = 0; i < tmpList.size(); i++) {
+			for (int i = 0; i < tmpList.size(); i++) {
 				Request request = new Request();
 				request.info = tmpList.get(i);
 				applist.add(request);
@@ -391,7 +362,6 @@ public class AppListerActivity extends AppCompatActivity {
 		protected Boolean doInBackground(ApplicationInfo... appInfos) {
 
 
-			int count = appInfos.length;
             for (ApplicationInfo info : appInfos) {
 
 
@@ -407,7 +377,7 @@ public class AppListerActivity extends AppCompatActivity {
 
                 try {
                     ApplicationInfo appInfo = info;
-                    Map<String, String> map = getPackageData(appInfo);
+                    Map<String, String> map = Misc.INSTANCE.getPackageData(appInfo, getApplicationContext(), getContentResolver());
 
                     PackageManager pm = getApplicationContext().getPackageManager();
                     PackageInfo pi = pm.getPackageInfo(appInfo.packageName, 0);
@@ -417,19 +387,11 @@ public class AppListerActivity extends AppCompatActivity {
 
                     //you need to encode ONLY the values of the parameters
 
-                    String param = "";
-                    for (Map.Entry<String, String> entry : map.entrySet()) {
-                        if (param != "") {
-                            param += "&";
-                        }
-
-                        param += entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), "UTF-8");
-                    }
 
                     map.put("version", pi.versionName);
 
-                    Drawable icon = getIconFromPackageName(appInfo.packageName, getApplicationContext());
-                    Bitmap bitmap = drawableToBitmap(icon);
+                    Drawable icon = Misc.INSTANCE.getIconFromPackageName(appInfo.packageName, getApplicationContext());
+                    Bitmap bitmap = Misc.INSTANCE.drawableToBitmap(getApplicationContext(), icon);
 
 
 //create a file to write bitmap data
@@ -449,7 +411,7 @@ public class AppListerActivity extends AppCompatActivity {
 
 
                     //------------------ CLIENT REQUEST
-                    FileInputStream fileInputStream = new FileInputStream(file);
+//                    FileInputStream fileInputStream = new FileInputStream(file);
                     // open a URL connection to the Servlet
                     // Open a HTTP connection to the URL
                     conn = (HttpURLConnection) url.openConnection();
@@ -475,7 +437,7 @@ public class AppListerActivity extends AppCompatActivity {
                     dos.writeBytes(gson.toJson(map));
 
 
-                    fileInputStream.close();
+//                    fileInputStream.close();
                     dos.flush();
                     dos.close();
                 } catch (IOException | PackageManager.NameNotFoundException |
@@ -498,53 +460,6 @@ public class AppListerActivity extends AppCompatActivity {
 
 		}
 
-		// Try to get the largest icon possible
-		public Drawable getIconFromPackageName(String packageName, Context context)
-		{
-			PackageManager pm = context.getPackageManager();
-			try
-			{
-				PackageInfo pi = pm.getPackageInfo(packageName, 0);
-				Context otherAppCtx = context.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
-
-				int displayMetrics[] = {DisplayMetrics.DENSITY_XXXHIGH, DisplayMetrics.DENSITY_XXHIGH, DisplayMetrics.DENSITY_XHIGH, DisplayMetrics.DENSITY_HIGH, DisplayMetrics.DENSITY_TV};
-
-				for (int displayMetric : displayMetrics)
-				{
-					try
-					{
-						Drawable d = otherAppCtx.getResources().getDrawableForDensity(pi.applicationInfo.icon, displayMetric, getApplicationContext().getTheme());
-						if (d != null)
-						{
-							return d;
-						}
-					}
-					catch (Resources.NotFoundException e)
-					{
-						Log.d("TAG", "NameNotFound for" + packageName + " @ density: " + displayMetric);
-						continue;
-					}
-				}
-
-			}
-			catch (Exception e)
-			{
-				// Handle Error here
-			}
-
-			ApplicationInfo appInfo = null;
-			try
-			{
-				appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
-			}
-			catch (PackageManager.NameNotFoundException e)
-			{
-				return null;
-			}
-
-			return appInfo.loadIcon(pm);
-		}
-
 
 
 
@@ -561,29 +476,4 @@ public class AppListerActivity extends AppCompatActivity {
 	}
 
 
-	public Bitmap drawableToBitmap (Drawable drawable) {
-		if (drawable instanceof BitmapDrawable) {
-			return ((BitmapDrawable) drawable).getBitmap();
-		} else if (drawable instanceof AdaptiveIconDrawable) {
-			AdaptiveIconDrawable icon = ((AdaptiveIconDrawable)drawable);
-			Drawable bg = icon.getBackground();
-			Drawable fg = icon.getForeground();
-			int w = icon.getIntrinsicWidth();
-			int h = icon.getIntrinsicHeight();
-			Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-			Canvas canvas = new Canvas(result);
-			icon.setBounds(0, 0, w, h);
-			if (bg != null) {
-				bg.draw(canvas);
-			}
-			if (fg != null) {
-				fg.draw(canvas);
-			}
-			return result;
-		}
-		float density = getBaseContext().getResources().getDisplayMetrics().density;
-		int defaultWidth = (int)(48* density);
-		int defaultHeight = (int)(48* density);
-		return Bitmap.createBitmap(defaultWidth, defaultHeight, Bitmap.Config.ARGB_8888);
-	}
 }
