@@ -18,6 +18,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings.Secure;
 import android.text.Html;
 import android.util.DisplayMetrics;
@@ -57,6 +59,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class AppListerActivity extends AppCompatActivity {
@@ -86,7 +90,50 @@ public class AppListerActivity extends AppCompatActivity {
 		TextView androidIdTxt = (TextView) findViewById(R.id.android_id_txt);
 		androidIdTxt.setText("Android ID: "+android_id+"\nClick here to view on site");
 
-		new LoadApplications().execute();
+		//new LoadApplications().execute();
+
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		Handler handler = new Handler(Looper.getMainLooper());
+
+
+		progress = ProgressDialog.show(AppListerActivity.this, null,
+				"Loading application info...");
+
+		executor.execute(() -> {
+
+            //Background work here
+            List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
+            //List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA)));
+
+
+            applist = new ArrayList<>();
+            for (int i = 0; i < tmpList.size(); i++) {
+                Request request = new Request();
+                request.info = tmpList.get(i);
+                applist.add(request);
+            }
+
+            listadaptor = new ApplicationAdapter(
+                    AppListerActivity.this,
+                    R.layout.snippet_list_row, applist
+            );
+
+            handler.post(() -> {
+				//UI Thread work here
+				mainListView = findViewById(R.id.mainListView);
+				mainListView.setAdapter(listadaptor);
+
+				mainListView.setClickable(true);
+
+				mainListView.setOnItemClickListener((parent, view, position, id) -> {
+					Log.w("GOT pos",""+position);
+					Request request = applist.get(position);
+					request.selected = !request.selected;
+					listadaptor.notifyDataSetChanged();
+				});
+				progress.dismiss();
+			});
+        });
 	}
 
 
@@ -293,67 +340,6 @@ public class AppListerActivity extends AppCompatActivity {
 		return applist;
 	}
 
-
-
-
-	private class LoadApplications extends AsyncTask<Void, Void, Void> {
-		private ProgressDialog progress = null;
-
-		@Override
-		protected Void doInBackground(Void... params) {
-			List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
-			//List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA)));
-
-
-			applist = new ArrayList<>();
-			for (int i = 0; i < tmpList.size(); i++) {
-				Request request = new Request();
-				request.info = tmpList.get(i);
-				applist.add(request);
-
-			}
-
-			listadaptor = new ApplicationAdapter(AppListerActivity.this,
-					R.layout.snippet_list_row, applist);
-
-			return null;
-		}
-
-		@Override
-		protected void onCancelled() {
-			super.onCancelled();
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			mainListView = findViewById(R.id.mainListView);
-			mainListView.setAdapter(listadaptor);
-
-			mainListView.setClickable(true);
-
-
-
-			mainListView.setOnItemClickListener((parent, view, position, id) -> {
-                Log.w("GOT pos",""+position);
-                Request request = applist.get(position);
-                request.selected = !request.selected;
-                listadaptor.notifyDataSetChanged();
-            });
-
-
-
-
-			progress.dismiss();
-			super.onPostExecute(result);
-		}
-
-		@Override
-		protected void onPreExecute() {
-			progress = ProgressDialog.show(AppListerActivity.this, null,
-					"Loading application info...");
-			super.onPreExecute();
-		}
-	}
 
 
 
