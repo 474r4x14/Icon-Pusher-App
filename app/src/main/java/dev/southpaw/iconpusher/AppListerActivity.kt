@@ -184,8 +184,8 @@ class AppListerActivity : AppCompatActivity() {
         progressDone = 0
         // Let's build the request list
         pushList.clear()
-        for (i in applist!!.indices) {
-            val request = applist!![i]
+        for (i in applist.indices) {
+            val request = applist[i]
             if (request.selected) {
                 pushList.add(request)
             }
@@ -205,17 +205,17 @@ class AppListerActivity : AppCompatActivity() {
         progress = ProgressDialog(this)
         builder.setPositiveButton("Submit", DialogInterface.OnClickListener { dialog, id ->
             Log.w("myApp", "about to pushdata")
-            progress!!.setCancelable(false)
+            progress.setCancelable(false)
 
-            progress!!.setMessage("Sending App Details")
-            progress!!.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-            progress!!.progress = 0
-            progress!!.max = pushList.size
+            progress.setMessage("Sending App Details")
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+            progress.progress = 0
+            progress.max = pushList.size
 
             isRunning = true
 
 
-            progress!!.setButton("Cancel", DialogInterface.OnClickListener { dialog, which ->
+            progress.setButton("Cancel", DialogInterface.OnClickListener { dialog, which ->
                 isRunning = false
                 return@OnClickListener
             })
@@ -238,26 +238,24 @@ class AppListerActivity : AppCompatActivity() {
                         postData(info, applicationContext, contentResolver)
                         handler.post {
                             //UI Thread work here
-                            if (progress != null) {
-                                progressDone++
-                                progress!!.progress = progressDone
-                                if (progressDone == pushList.size) {
-                                    progress!!.dismiss()
-                                }
+                            progressDone++
+                            progress.progress = progressDone
+                            if (progressDone == pushList.size) {
+                                progress.dismiss()
                             }
                         }
                     }
                 }
             }
 
-            progress!!.show()
+            progress.show()
             mThread.start()
 
             Log.w("myApp", "finished pushdata")
 
 
-            for (i in applist!!.indices) {
-                applist!![i].selected = false
+            for (i in applist.indices) {
+                applist[i].selected = false
             }
             listadaptor!!.notifyDataSetChanged()
             dialog.cancel()

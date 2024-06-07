@@ -12,24 +12,20 @@ import android.widget.TextView
 
 class ApplicationAdapter(
     private val context: Context, textViewResourceId: Int,
-    val appsList: List<Request>
+    private val appsList: List<Request>
 ) : ArrayAdapter<Request?>(
-    context, textViewResourceId, appsList!!
+    context, textViewResourceId, appsList
 ) {
 //    private var appsList: List<Request>? = null
-    private val packageManager: PackageManager
-
-    init {
 //        this.appsList = appsList
-        packageManager = context.packageManager
-    }
+private val packageManager: PackageManager = context.packageManager
 
     override fun getCount(): Int {
-        return (if ((null != appsList)) appsList.size else 0)
+        return appsList.size
     }
 
     override fun getItem(position: Int): Request? {
-        return (if ((null != appsList)) appsList.get(position) else null)
+        return appsList[position]
     }
 
     override fun getItemId(position: Int): Long {
@@ -43,7 +39,7 @@ class ApplicationAdapter(
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             view = layoutInflater.inflate(R.layout.snippet_list_row, null)
         }
-        val request = appsList!![position]
+        val request = appsList[position]
         val data = request.info
         if (null != data) {
             val appName = view!!.findViewById<View>(R.id.app_name) as TextView
