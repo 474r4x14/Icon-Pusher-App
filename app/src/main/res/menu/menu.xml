@@ -5,11 +5,11 @@
     <item
         android:id="@+id/menu_info"
         android:icon="@android:drawable/ic_menu_info_details"
-        android:title="add"
+        android:title="@string/info"
         app:showAsAction="always" />
     <item
         android:id="@+id/menu_select_all"
         android:icon="?attr/actionModeSelectAllDrawable"
-        android:title="add"
-        app:showAsAction="always" />
+        android:title="@string/select_all"
+        app:showAsAction="ifRoom" />
 </menu>

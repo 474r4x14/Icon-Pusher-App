@@ -17,5 +17,8 @@
 
     <string name="submit_icon">Submit Icon</string>
     <string name="cancel">Close</string>
+    <string name="upload_button_description">Send package details to the iconpusher.com website</string>
+    <string name="select_all">Select All</string>
+    <string name="info">Info</string>
 
 </resources>
