@@ -1,362 +1,312 @@
-package dev.southpaw.iconpusher;
+package dev.southpaw.iconpusher
 
-import android.app.ProgressDialog;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.AdaptiveIconDrawable;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.provider.Settings.Secure;
-import android.text.Html;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.CheckBox;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.app.ProgressDialog
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings.Secure
+import android.text.Html
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemClickListener
+import android.widget.CheckBox
+import android.widget.ListView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import dev.southpaw.iconpusher.Misc.postData
+import java.util.concurrent.Executors
 
-import android.widget.Toast;
+class AppListerActivity : AppCompatActivity() {
+    lateinit var pm: PackageManager
+    private var applist = ArrayList<Request>()
+    private var listadaptor: ApplicationAdapter? = null
+    lateinit var progress: ProgressDialog
+    private var progressDone = 0
+    lateinit var mainListView: ListView
+    private var checkAll = false
+    private val pushList = ArrayList<Request>()
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        setSupportActionBar(findViewById<View>(R.id.toolbar) as Toolbar)
 
-import com.google.gson.Gson;
-
-import org.apache.commons.io.FileUtils;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+        pm = getPackageManager()
 
 
-public class AppListerActivity extends AppCompatActivity {
-	private PackageManager packageManager = null;
-	private List<Request> applist = null;
-	private ApplicationAdapter listadaptor = null;
-	private ProgressDialog progress;
-	private Integer progressDone = 0;
-	public ListView mainListView;
-	public static ArrayList<CheckBox> checkboxes = new ArrayList<>();
+        val android_id = Secure.getString(
+            this.contentResolver,
+            Secure.ANDROID_ID
+        )
 
-	private Boolean checkAll = false;
-	private ArrayList<Request> pushList = new ArrayList<>();
+        val androidIdTxt = findViewById<View>(R.id.android_id_txt) as TextView
+        androidIdTxt.text = "Android ID: $android_id\nClick here to view on site"
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-		packageManager = getPackageManager();
+        //new LoadApplications().execute();
+        val executor = Executors.newSingleThreadExecutor()
+        val handler = Handler(Looper.getMainLooper())
 
 
-		String android_id = Secure.getString(this.getContentResolver(),
-			Secure.ANDROID_ID);
+        progress = ProgressDialog.show(
+            this@AppListerActivity, null,
+            "Loading application info..."
+        )
 
-		TextView androidIdTxt = (TextView) findViewById(R.id.android_id_txt);
-		androidIdTxt.setText("Android ID: "+android_id+"\nClick here to view on site");
-
-		//new LoadApplications().execute();
-
-		ExecutorService executor = Executors.newSingleThreadExecutor();
-		Handler handler = new Handler(Looper.getMainLooper());
-
-
-		progress = ProgressDialog.show(AppListerActivity.this, null,
-				"Loading application info...");
-
-		executor.execute(() -> {
-
+        executor.execute {
             //Background work here
-            List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
-            //List<ApplicationInfo> tmpList = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA)));
+            val tmpList =
+                checkForLaunchIntent(pm.getInstalledApplications(PackageManager.GET_META_DATA))
 
 
-            applist = new ArrayList<>();
-            for (int i = 0; i < tmpList.size(); i++) {
-                Request request = new Request();
-                request.info = tmpList.get(i);
-                applist.add(request);
+            //List<ApplicationInfo> tmpList = checkForLaunchIntent(pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA)));
+//            applist = ArrayList()
+            for (i in tmpList.indices) {
+                val request = Request()
+                request.info = tmpList[i]
+                applist.add(request)
             }
 
-            listadaptor = new ApplicationAdapter(
-                    AppListerActivity.this,
-                    R.layout.snippet_list_row, applist
-            );
+            listadaptor = ApplicationAdapter(
+                this@AppListerActivity,
+                R.layout.snippet_list_row, applist
+            )
+            handler.post {
+                //UI Thread work here
+                mainListView = findViewById(R.id.mainListView)
+                mainListView.setAdapter(listadaptor)
 
-            handler.post(() -> {
-				//UI Thread work here
-				mainListView = findViewById(R.id.mainListView);
-				mainListView.setAdapter(listadaptor);
+                mainListView.setClickable(true)
 
-				mainListView.setClickable(true);
-
-				mainListView.setOnItemClickListener((parent, view, position, id) -> {
-					Log.w("GOT pos",""+position);
-					Request request = applist.get(position);
-					request.selected = !request.selected;
-					listadaptor.notifyDataSetChanged();
-				});
-				progress.dismiss();
-			});
-        });
-	}
-
-
-	public void idClick(View view)
-	{
-		Log.w("doird","meh");
-		String android_id = Secure.getString(this.getContentResolver(),
-			Secure.ANDROID_ID);
-		Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://iconpusher.com/device/"+android_id));
-		startActivity(browserIntent);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.menu, menu);
-		return true;
-	}
+                mainListView.setOnItemClickListener(OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
+                    Log.w("GOT pos", "" + position)
+                    val request = applist.get(position)
+                    request.selected = !request.selected
+                    listadaptor!!.notifyDataSetChanged()
+                })
+                progress.dismiss()
+            }
+        }
+    }
 
 
-	public boolean onOptionsItemSelected(MenuItem item) {
-		boolean result = true;
+    fun idClick(view: View?) {
+        Log.w("doird", "meh")
+        val android_id = Secure.getString(
+            this.contentResolver,
+            Secure.ANDROID_ID
+        )
+        val browserIntent =
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://iconpusher.com/device/$android_id"))
+        startActivity(browserIntent)
+    }
 
-		switch (item.getItemId()) {
-			case R.id.menu_info: {
-				displayAboutDialog();
-				break;
-			}
-			case R.id.menu_select_all: {
-				checkAll = !checkAll;
-				for (int i = 0; i < applist.size(); i++) {
-					applist.get(i).selected = checkAll;
-				}
-				listadaptor.notifyDataSetChanged();
-				break;
-			}
-			default: {
-				result = super.onOptionsItemSelected(item);
-
-				break;
-			}
-		}
-
-		return result;
-	}
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.menu, menu)
+        return true
+    }
 
 
-	private void displayAboutDialog() {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(getString(R.string.info_title));
-		builder.setMessage(getString(R.string.info_data));
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        var result = true
 
-		builder.setNeutralButton("Privacy Policy", (dialog, id) -> displayPrivacyDialog());
+        when (item.itemId) {
+            R.id.menu_info -> {
+                displayAboutDialog()
+            }
 
-		builder.setNegativeButton("Close", (dialog, id) -> dialog.cancel());
-		builder.show();
-	}
+            R.id.menu_select_all -> {
+                checkAll = !checkAll
+                var i = 0
+                while (i < applist!!.size) {
+                    applist!![i].selected = checkAll
+                    i++
+                }
+                listadaptor!!.notifyDataSetChanged()
+            }
 
-
-	private void displayPrivacyDialog() {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(getString(R.string.privacy_title));
-		builder.setMessage(getString(R.string.info_data));
-		builder.setMessage(Html.fromHtml(getString(R.string.privacy_data_1)+"<br/><br/><b>Data collected</b><br/>"+ getString(R.string.privacy_data_2)+"<br/><br/>" +
-				"<b>What happens to the data</b><br/>"+getString(R.string.privacy_data_3)+"<br/><br/>" +
-				getString(R.string.privacy_data_4)));
-
-		builder.setNegativeButton("Close", (dialog, id) -> dialog.cancel());
-		builder.show();
-	}
-
-
-
-
-	public void sendTest(View view)
-	{
-		displaySendDialog();
-	}
+            else -> {
+                result = super.onOptionsItemSelected(item)
+            }
+        }
+        return result
+    }
 
 
-	static Boolean isRunning = true;
+    private fun displayAboutDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.info_title))
+        builder.setMessage(getString(R.string.info_data))
+
+        builder.setNeutralButton("Privacy Policy") { dialog: DialogInterface?, id: Int -> displayPrivacyDialog() }
+
+        builder.setNegativeButton("Close") { dialog: DialogInterface, id: Int -> dialog.cancel() }
+        builder.show()
+    }
 
 
-	private void displaySendDialog() {
+    private fun displayPrivacyDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.privacy_title))
+        builder.setMessage(getString(R.string.info_data))
+        builder.setMessage(
+            Html.fromHtml(
+                getString(R.string.privacy_data_1) + "<br/><br/><b>Data collected</b><br/>" + getString(
+                    R.string.privacy_data_2
+                ) + "<br/><br/>" +
+                        "<b>What happens to the data</b><br/>" + getString(R.string.privacy_data_3) + "<br/><br/>" +
+                        getString(R.string.privacy_data_4)
+            )
+        )
 
-		progressDone = 0;
-		// Let's build the request list
-		pushList.clear();
-		for (int i=0; i < applist.size(); i++) {
-			Request request = applist.get(i);
-			if (request.selected) {
-				pushList.add(request);
-			}
-		}
-
-		if (pushList.isEmpty()) {
-			Toast.makeText(this, "Please select at least one app", Toast.LENGTH_SHORT ).show();
-
-			return;
-		}
-
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(getString(R.string.send_title));
-		builder.setMessage("Do you want to push these "+pushList.size()+" apps?");
-		builder.setCancelable(false);
-
-		progress=new ProgressDialog(this);
-		builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-
-				Log.w("myApp", "about to pushdata");
-
-				progress.setCancelable(false);
-
-				progress.setMessage("Sending App Details");
-				progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				progress.setProgress(0);
-				progress.setMax(pushList.size());
-
-				isRunning = true;
+        builder.setNegativeButton("Close") { dialog: DialogInterface, id: Int -> dialog.cancel() }
+        builder.show()
+    }
 
 
-				progress.setButton("Cancel", new DialogInterface.OnClickListener()
-				{
-					public void onClick(DialogInterface dialog, int which)
-					{
-						isRunning = false;
-						return;
-					}
-				});
+    fun sendTest(view: View?) {
+        displaySendDialog()
+    }
 
-				final Thread mThread = new Thread(() -> {
-                    for (int i = 0; i < pushList.size(); i++) {
-                        if (!isRunning) {
-                            break;
-                        }
-                        ApplicationInfo info = pushList.get(i).info;
-//                        new PushData().execute(info);
-						ExecutorService executor = Executors.newSingleThreadExecutor();
-						Handler handler = new Handler(Looper.getMainLooper());
 
-						if (info == null) {
-							continue;
-						}
-						executor.execute(() -> {
+    private fun displaySendDialog() {
+        progressDone = 0
+        // Let's build the request list
+        pushList.clear()
+        for (i in applist!!.indices) {
+            val request = applist!![i]
+            if (request.selected) {
+                pushList.add(request)
+            }
+        }
 
-                            //Background work here
-							Misc.INSTANCE.postData(info, getApplicationContext(), getContentResolver());
+        if (pushList.isEmpty()) {
+            Toast.makeText(this, "Please select at least one app", Toast.LENGTH_SHORT).show()
 
-                            handler.post(() -> {
-								//UI Thread work here
-								if (progress != null) {
-									progressDone++;
-									progress.setProgress(progressDone);
-									if (progressDone == pushList.size()) {
-										progress.dismiss();
-									}
-								}
-							});
-                        });
+            return
+        }
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.send_title))
+        builder.setMessage("Do you want to push these " + pushList.size + " apps?")
+        builder.setCancelable(false)
+
+        progress = ProgressDialog(this)
+        builder.setPositiveButton("Submit", DialogInterface.OnClickListener { dialog, id ->
+            Log.w("myApp", "about to pushdata")
+            progress!!.setCancelable(false)
+
+            progress!!.setMessage("Sending App Details")
+            progress!!.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+            progress!!.progress = 0
+            progress!!.max = pushList.size
+
+            isRunning = true
+
+
+            progress!!.setButton("Cancel", DialogInterface.OnClickListener { dialog, which ->
+                isRunning = false
+                return@OnClickListener
+            })
+
+            val mThread = Thread {
+                for (i in pushList.indices) {
+                    if (!isRunning) {
+                        break
                     }
-                });
+                    val info = pushList[i].info
+                    //                        new PushData().execute(info);
+                    val executor = Executors.newSingleThreadExecutor()
+                    val handler = Handler(Looper.getMainLooper())
 
-				progress.show();
-				mThread.start();
-
-				Log.w("myApp", "finished pushdata");
-
-
-				for (int i=0; i < applist.size(); i++) {
-					applist.get(i).selected = false;
-				}
-				listadaptor.notifyDataSetChanged();
-
-				dialog.cancel();
-			}
-		});
-		builder.setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
-		 
-		builder.show();
-	}
-
-
-
-
-
-	private List<ApplicationInfo> checkForLaunchIntent(List<ApplicationInfo> list) {
-		ArrayList<ApplicationInfo> applist = new ArrayList<ApplicationInfo>();
-		for (ApplicationInfo info : list) {
-			try {
-				if (null != packageManager.getLaunchIntentForPackage(info.packageName)) {
-					applist.add(info);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-
-		applist.sort(new Comparator<ApplicationInfo>() {
-            @Override
-            public int compare(ApplicationInfo lhs, ApplicationInfo rhs) {
-
-                ApplicationInfo ai1;
-                ApplicationInfo ai2;
-                try {
-                    ai1 = packageManager.getApplicationInfo(lhs.packageName, 0);
-                } catch (final PackageManager.NameNotFoundException e) {
-                    ai1 = null;
+                    if (info == null) {
+                        continue
+                    }
+                    executor.execute {
+                        //Background work here
+                        postData(info, applicationContext, contentResolver)
+                        handler.post {
+                            //UI Thread work here
+                            if (progress != null) {
+                                progressDone++
+                                progress!!.progress = progressDone
+                                if (progressDone == pushList.size) {
+                                    progress!!.dismiss()
+                                }
+                            }
+                        }
+                    }
                 }
-                try {
-                    ai2 = packageManager.getApplicationInfo(rhs.packageName, 0);
-                } catch (final PackageManager.NameNotFoundException e) {
-                    ai2 = null;
-                }
-                final String lhsName = (String) (ai1 != null ? packageManager.getApplicationLabel(ai1) : "(unknown)");
-                final String rhsName = (String) (ai2 != null ? packageManager.getApplicationLabel(ai2) : "(unknown)");
-
-                return lhsName.compareToIgnoreCase(rhsName);
             }
-        });
+
+            progress!!.show()
+            mThread.start()
+
+            Log.w("myApp", "finished pushdata")
 
 
-		return applist;
-	}
+            for (i in applist!!.indices) {
+                applist!![i].selected = false
+            }
+            listadaptor!!.notifyDataSetChanged()
+            dialog.cancel()
+        })
+        builder.setNegativeButton("Cancel") { dialog: DialogInterface, id: Int -> dialog.cancel() }
+
+        builder.show()
+    }
+
+
+    private fun checkForLaunchIntent(list: List<ApplicationInfo>): List<ApplicationInfo> {
+        val applist = ArrayList<ApplicationInfo>()
+        for (info in list) {
+            try {
+                if (null != pm!!.getLaunchIntentForPackage(info.packageName)) {
+                    applist.add(info)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+
+        applist.sortWith(java.util.Comparator { lhs, rhs ->
+            var ai1 = try {
+                pm!!.getApplicationInfo(lhs.packageName, 0)
+            } catch (e: PackageManager.NameNotFoundException) {
+                null
+            }
+            var ai2 = try {
+                pm!!.getApplicationInfo(rhs.packageName, 0)
+            } catch (e: PackageManager.NameNotFoundException) {
+                null
+            }
+            val lhsName =
+                (if (ai1 != null) pm!!.getApplicationLabel(ai1) else "(unknown)") as String
+            val rhsName =
+                (if (ai2 != null) pm!!.getApplicationLabel(ai2) else "(unknown)") as String
+            lhsName.compareTo(rhsName, ignoreCase = true)
+        })
+
+
+        return applist
+    }
+
+    companion object {
+        @JvmField
+		var checkboxes: ArrayList<CheckBox> = ArrayList()
+
+        var isRunning: Boolean = true
+    }
 }
