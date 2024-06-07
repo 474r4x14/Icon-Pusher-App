@@ -265,15 +265,35 @@ public class AppListerActivity extends AppCompatActivity {
 					}
 				});
 
-
-
 				final Thread mThread = new Thread(() -> {
                     for (int i = 0; i < pushList.size(); i++) {
                         if (!isRunning) {
                             break;
                         }
                         ApplicationInfo info = pushList.get(i).info;
-                        new PushData().execute(info);
+//                        new PushData().execute(info);
+						ExecutorService executor = Executors.newSingleThreadExecutor();
+						Handler handler = new Handler(Looper.getMainLooper());
+
+						if (info == null) {
+							continue;
+						}
+						executor.execute(() -> {
+
+                            //Background work here
+							Misc.INSTANCE.postData(info, getApplicationContext(), getContentResolver());
+
+                            handler.post(() -> {
+								//UI Thread work here
+								if (progress != null) {
+									progressDone++;
+									progress.setProgress(progressDone);
+									if (progressDone == pushList.size()) {
+										progress.dismiss();
+									}
+								}
+							});
+                        });
                     }
                 });
 
@@ -339,37 +359,4 @@ public class AppListerActivity extends AppCompatActivity {
 
 		return applist;
 	}
-
-
-
-
-
-	private class PushData extends AsyncTask<ApplicationInfo, Void, Boolean> {
-		@Override
-		protected Boolean doInBackground(ApplicationInfo... appInfos) {
-
-
-            for (ApplicationInfo info : appInfos) {
-				Misc.INSTANCE.postData(info, getApplicationContext(), getContentResolver());
-            }
-			return null;
-
-		}
-
-
-
-
-		//@Override
-		protected void onPostExecute(Boolean result) {
-			if (progress != null) {
-				progressDone++;
-				progress.setProgress(progressDone);
-				if (progressDone == pushList.size()) {
-					progress.dismiss();
-				}
-			}
-		}
-	}
-
-
 }
