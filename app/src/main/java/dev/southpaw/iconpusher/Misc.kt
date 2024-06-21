@@ -14,16 +14,18 @@ import android.provider.Settings.Secure
 import android.util.DisplayMetrics
 import android.util.Log
 import com.google.gson.Gson
-import org.apache.commons.io.FileUtils
+import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Base64
+
 
 object Misc {
 
@@ -147,6 +149,7 @@ object Misc {
 
             //if you are using https, make sure to import java.net.HttpsURLConnection
             url = URL("https://api.iconpusher.com/package/" + appInfo.packageName)
+//            url = URL("http://192.168.0.178:8084/package/" + appInfo.packageName)
 
 
             //you need to encode ONLY the values of the parameters
@@ -188,20 +191,34 @@ object Misc {
             conn!!.setRequestProperty("Connection", "Keep-Alive")
             conn!!.setRequestProperty("Content-Type", "application/json")
 
+
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            val byteArray = stream.toByteArray()
+            bitmap.recycle()
+
+
             // convert the image to base64
-            val fileContent = FileUtils.readFileToByteArray(file)
+//            val fileContent = FileUtils.readFileToByteArray(file)
+            val fileContent = byteArray
             val encodedString = Base64.getEncoder().encodeToString(fileContent)
 
             map["icon"] = encodedString
 
             dos = DataOutputStream(conn!!.outputStream)
             val gson = Gson()
-            dos.writeBytes(gson.toJson(map))
+
+            //dos.writeBytes(gson.toJson(map))
+            val writer = BufferedWriter(OutputStreamWriter(dos, "UTF-8"))
+            writer.write(gson.toJson(map))
+            writer.close()
+            dos.close()
+
 
 
             //                    fileInputStream.close();
-            dos.flush()
-            dos.close()
+//            dos.flush()
+//            dos.close()
         } catch (ex: IOException) {
             Log.e("Debug", "error: " + ex.message, ex)
         } catch (ex: PackageManager.NameNotFoundException) {
